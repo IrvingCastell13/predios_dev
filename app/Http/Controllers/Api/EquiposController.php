@@ -8,9 +8,9 @@ use Inertia\Inertia;
 
 class EquiposController extends Controller
 {
-    // public function index()
-    // {
-    //     return Inertia::Render('web/Plan/Equipos/Index');
+    public function index()
+    {
+        return Inertia::Render('web/Plan/Equipos/Index');
 
-    // }
+    }
 }

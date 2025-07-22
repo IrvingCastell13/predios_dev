@@ -1,5 +1,6 @@
-// Importa la función para crear la aplicación de Vue
+import './bootstrap';
 import { createApp } from 'vue';
+
 
 // Importa tu componente contenedor que tiene las dos gráficas
 import GraficasReportes from './components/GraficasChartJs/GraficasReportes.vue';

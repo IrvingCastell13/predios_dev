@@ -187,8 +187,8 @@
     import { usestoreStore } from '../js/store';
     import { v4 as uuidv4 } from 'uuid';
     import ButtonLoading from '../../../components/Components/Bootstrap/ButtonLoading.vue';
-    import PreviewDocumentosImgPdf from '../../../components/Components/preview/PreviewDocumentosImgPdf.vue';
-    import { cerrarModal } from '../../../Utilities';
+import PreviewDocumentosImgPdf from '../../../components/Components/preview/PreviewDocumentosImgPdf.vue';
+import { cerrarModal } from '../../../Utilities';
 
     const store = usestoreStore()
     const refInputArchivos = ref(null)
