@@ -558,18 +558,14 @@ class ReporteDocumentosController extends Controller
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
             ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
             ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
-
-            // Cruzamos con los documentos existentes para saber si fueron creados
             ->leftJoin('gd_documentos as d', function ($join) {
                 $join->on('d.IDPredio', '=', 'p.IDPredio')
                     ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
             })
-
-            // Cruzamos con el sistema de tracking para obtener el estado del documento
-            ->leftJoin('track_instancias as ti', 'ti.IDInstancia', '=', 'd.IDDocumento')
+            ->leftJoin('track_instancias as ti', 'ti.IDInstancia', 'd.IDDocumento')
             ->leftJoin('track_estados as s', 's.IDEstado', '=', 'ti.IDEstadoActualInstancia');
 
-        // Reutilizamos la función que ya teníamos para aplicar los filtros del dashboard
+        // Reutilizamos la función que ya teníamos para aplicar los filtros
         $query = $this->aplicarFiltrosComunes($query, $request);
 
         $resultados = $query->select(
@@ -577,13 +573,34 @@ class ReporteDocumentosController extends Controller
             'g.NombreGrupoDoc as categoria',
             'td.NombreTipoDocumento as documento',
             DB::raw("CASE WHEN d.IDDocumento IS NOT NULL THEN 'CREADO' ELSE 'FALTANTE' END as estado_documento"),
-            's.NombreEstado as estado_accion'
+            's.NombreEstado as estado_accion',
+            's.IDEstado as estado_id' // Obtenemos el ID del estado para el valor 'v'
         )
             ->orderBy('p.NombrePredio')
             ->orderBy('g.NombreGrupoDoc')
             ->orderBy('td.NombreTipoDocumento')
             ->get();
 
-        return response()->json($resultados);
+        // --- INICIO: TRANSFORMACIÓN DE DATOS (LA SOLUCIÓN) ---
+        // Mapeamos los resultados al formato {x, y, v} que la gráfica de matriz espera.
+        $data = $resultados->map(function ($item) {
+
+            $estado = 'FALTANTE';
+            if ($item->estado_documento === 'CREADO') {
+                // Si el documento está creado, usamos su estado de acción.
+                // Si no tiene estado de acción, lo marcamos como 'Pendiente' por defecto.
+                $estado = $item->estado_accion ?? 'Pendiente';
+            }
+
+            return [
+                'x' => $item->documento, // Eje X de la matriz
+                'y' => $item->predio,    // Eje Y de la matriz
+                'v' => $item->estado_id, // Valor numérico/ID para el color
+                'estado' => $estado      // Texto para el tooltip
+            ];
+        });
+        // --- FIN: TRANSFORMACIÓN DE DATOS ---
+
+        return response()->json($data);
     }
 }

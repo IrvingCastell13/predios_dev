@@ -96,10 +96,7 @@ export default {
                     cancelToken: this.cancelTokenSource.token
                 });
                 
-                // --- INICIO: LÍNEAS DE DEPURACIÓN ---
-                console.log("1. Datos recibidos del API:", response.data);
                 this.processChartData(response.data);
-                // --- FIN: LÍNEAS DE DEPURACIÓN ---
 
             } catch (error) {
                 if (axios.isCancel(error)) {
@@ -119,9 +116,6 @@ export default {
 
             const documentos = [...new Set(rows.map(r => r.documento))];
             const predios = [...new Set(rows.map(r => r.predio))];
-            
-            console.log("2. Eje Y (Documentos):", documentos);
-            console.log("3. Datasets (Predios):", predios);
 
             const estadoColorMap = {
                 'Ejecutado': { value: 1, color: '#4ade80' },
@@ -155,8 +149,6 @@ export default {
                     borderColor: '#ffffff'
                 };
             });
-            
-            console.log("4. Datasets finales para la gráfica:", datasets);
 
             this.chartData = {
                 labels: documentos,
