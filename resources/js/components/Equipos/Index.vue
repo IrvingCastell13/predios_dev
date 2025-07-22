@@ -22,15 +22,35 @@
                                     </div>
                                     <div class="flex-fill" style="min-width: 0;">
                                         <label for=""></label>
-                                        <v-select class=" mb-3" v-model="store.filters.IDPredio" :options="store.prediosCrear"  label="NombrePredio" placeholder="Predio" :reduce="predio => predio.IDPredio" @update:modelValue="cambiarPredio"></v-select>
+                                        <vue-multiselect
+                                            v-model="predioSeleccionado"
+                                            :options="store.prediosCrear"
+                                            placeholder="Predio"
+                                            label="NombrePredio"
+                                            track-by="IDPredio">
+                                        </vue-multiselect>
                                     </div>
                                     <div class="flex-fill" style="min-width: 0;">
                                         <label for=""></label>
-                                        <v-select placeholder="Sistema" style="height: 60px !important;"  v-model="store.filters.IDSistema" :options="store.sistemas"  label="NombreSistema"   :reduce="sistema => sistema.IDSistema"  @update:modelValue="store.obtenerSubsistemasIndex"></v-select>
+                                        <vue-multiselect
+                                            v-model="sistemaSeleccionado"
+                                            :options="store.sistemas"
+                                            placeholder="Sistema"
+                                            label="NombreSistema"
+                                            track-by="IDSistema">
+                                        </vue-multiselect>
+
                                     </div>
                                     <div class="flex-fill" style="min-width: 0;">
                                         <label for=""></label>
-                                       <v-select placeholder="Subsistema"  class=" " style="height: 60px !important;"  v-model="store.filters.IDSubsistema" :options="store.subsistemasIndex"  label="NombreSubsistema"   :reduce="subsistema => subsistema.IDSubsistema"></v-select>
+
+                                        <vue-multiselect
+                                            v-model="subsistemaSeleccionado"
+                                            :options="store.subsistemasIndex"
+                                            placeholder="Subsistema"
+                                            label="NombreSubsistema"
+                                            track-by="IDSubsistema">
+                                        </vue-multiselect>
                                     </div>
                                 </div>
                             </div>
@@ -178,6 +198,7 @@
 
 <script setup>
 
+
     import { onMounted, watch } from 'vue';
     import AppLayout from '../../Layout/App.vue'
     import { usestoreStore } from './js/store';
@@ -187,12 +208,31 @@
     import { usecodigoBarrasStore } from './js/codigoBarras';
     import { ref } from 'vue';
     import Detalle from './modales/Detalle/Detalle.vue';
+    import VueMultiselect from 'vue-multiselect';
 
     const store = usestoreStore()
 
     const equiposStore = usecodigoBarrasStore()
     const search = ref(store.filters.search);
     const showFilters = ref(true);
+
+    const predioSeleccionado = ref(null);
+    const sistemaSeleccionado = ref(null);
+    const subsistemaSeleccionado = ref(null);
+
+    watch(predioSeleccionado, (newVal) => {
+    store.filters.IDPredio = newVal ? newVal.IDPredio : '';
+    cambiarPredio();
+});
+watch(sistemaSeleccionado, (newVal) => {
+    store.filters.IDSistema = newVal ? newVal.IDSistema : '';
+    subsistemaSeleccionado.value = null;
+    store.obtenerSubsistemasIndex();
+});
+watch(subsistemaSeleccionado, (newVal) => {
+    store.filters.IDSubsistema = newVal ? newVal.IDSubsistema : '';
+});
+
 
     watch(search, (newVal) => {
 
@@ -256,7 +296,7 @@
 
 
 </script>
-
+<style src="vue-multiselect/dist/vue-multiselect.css"></style>
 <style  scoped>
 
 

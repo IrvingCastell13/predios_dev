@@ -52,6 +52,56 @@ class ReporteDocumentosController extends Controller
         return response()->json($categorias);
     }
 
+    public function listarTiposDocumento()
+    {
+        $items = DB::table('gd_tipos_documento')
+            ->select('IDTipoDocumento', 'NombreTipoDocumento')
+            ->where('Borrado', 0)
+            ->orderBy('NombreTipoDocumento')
+            ->get();
+        return response()->json($items);
+    }
+
+    public function listarTiposInmueble()
+    {
+        // Nota: Basado en tus queries, la tabla correcta es conf_tipos_predio
+        $items = DB::table('conf_tipos_predio')
+            ->select('IDTipoPredio as IDTipoInmueble', 'NombreTipoPredio as NombreTipoInmueble')
+            ->where('Borrado', 0)
+            ->orderBy('NombreTipoInmueble')
+            ->get();
+        return response()->json($items);
+    }
+
+    private function aplicarFiltrosComunes($query, Request $request)
+    {
+        $predioIds = $request->input('predio_ids', []);
+        $grupoIds = $request->input('grupo_ids', []);
+        $categoriaIds = $request->input('categoria_ids', []);
+        $tipoDocIds = $request->input('tipo_doc_ids', []); // <-- Nuevo
+        $tipoInmuebleIds = $request->input('tipo_inmueble_ids', []); // <-- Nuevo
+
+        if (!empty($predioIds)) {
+            $query->whereIn('p.IDPredio', $predioIds);
+        }
+        if (!empty($grupoIds)) {
+            $query->whereIn('g.IDGrupoDoc', $grupoIds);
+        }
+        if (!empty($categoriaIds)) {
+            $query->whereIn('cat.IDCategoriaDoc', $categoriaIds);
+        }
+        // --- INICIO: Lógica de filtros añadida ---
+        if (!empty($tipoDocIds)) {
+            $query->whereIn('td.IDTipoDocumento', $tipoDocIds);
+        }
+        if (!empty($tipoInmuebleIds)) {
+            // Se filtra por la columna IDTipoPredio de la tabla de predios (p)
+            $query->whereIn('p.IDTipoPredio', $tipoInmuebleIds);
+        }
+        // --- FIN: Lógica de filtros añadida ---
+
+        return $query;
+    }
 
     public function estadoPorPredio(ReportePorPrediosRequest $request)
     {
@@ -253,24 +303,20 @@ class ReporteDocumentosController extends Controller
         return response()->json($ponderado);
     }
 
-
     public function matrizPorSubcategoria(Request $request)
     {
-        $predioIds = $request->input('predio_ids', []);
-
         $query = DB::table('conf_predios as p')
+            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
             ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
+            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
             ->leftJoin('gd_documentos as d', function ($join) {
                 $join->on('d.IDPredio', '=', 'p.IDPredio')
                     ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
             });
 
-        // Si se envían IDs, aplicamos el filtro
-        if (!empty($predioIds)) {
-            $query->whereIn('p.IDPredio', $predioIds);
-        }
+        $query = $this->aplicarFiltrosComunes($query, $request);
 
         $resultados = $query->select(
             'p.NombrePredio as predio',
@@ -280,34 +326,28 @@ class ReporteDocumentosController extends Controller
             ->groupBy('p.NombrePredio', 'cat.NombreCategoriaDoc')
             ->get();
 
-        $data = $resultados->map(function ($item) {
-            return [
-                'x' => $item->subcategoria,
-                'y' => $item->predio,
-                'v' => (float) $item->cumplimiento,
-            ];
-        });
-
-        return response()->json($data);
+        return response()->json($resultados->map(fn($item) => [
+            'x' => $item->subcategoria,
+            'y' => $item->predio,
+            'v' => (float) $item->cumplimiento
+        ]));
     }
 
     public function matrizArchivosPorSubcategoria(Request $request)
     {
-        $predioIds = $request->input('predio_ids', []);
-
         $query = DB::table('conf_predios as p')
+            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
             ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
+            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
             ->leftJoin('gd_documentos as d', function ($join) {
                 $join->on('d.IDPredio', '=', 'p.IDPredio')
                     ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
             })
             ->leftJoin('arch_archivos as a', 'a.IDObjetoPadreArchivo', '=', 'd.IDDocumento');
 
-        if (!empty($predioIds)) {
-            $query->whereIn('p.IDPredio', $predioIds);
-        }
+        $query = $this->aplicarFiltrosComunes($query, $request);
 
         $resultados = $query->select(
             'p.NombrePredio as predio',
@@ -317,21 +357,82 @@ class ReporteDocumentosController extends Controller
             ->groupBy('p.NombrePredio', 'cat.NombreCategoriaDoc')
             ->get();
 
-        $data = $resultados->map(fn($item) => [
+        return response()->json($resultados->map(fn($item) => [
             'x' => $item->subcategoria,
             'y' => $item->predio,
             'v' => (int) $item->cumplimiento
-        ]);
+        ]));
+    }
 
-        return response()->json($data);
+    public function matrizPorGrupo(Request $request)
+    {
+        $query = DB::table('conf_predios as p')
+            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
+            ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
+            ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
+            ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
+            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
+            ->leftJoin('gd_documentos as d', function ($join) {
+                $join->on('d.IDPredio', '=', 'p.IDPredio')
+                    ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
+            });
+
+        $query = $this->aplicarFiltrosComunes($query, $request);
+
+        $resultados = $query->select(
+            'p.NombrePredio as predio',
+            'g.NombreGrupoDoc as grupo',
+            DB::raw('ROUND((COUNT(d.IDDocumento) * 100.0) / COUNT(*), 2) as cumplimiento')
+        )
+            ->groupBy('p.NombrePredio', 'g.NombreGrupoDoc')
+            ->get();
+
+        return response()->json($resultados->map(fn($item) => [
+            'x' => $item->grupo,
+            'y' => $item->predio,
+            'v' => (float) $item->cumplimiento
+        ]));
+    }
+
+    public function matrizArchivosPorGrupo(Request $request)
+    {
+        $query = DB::table('conf_predios as p')
+            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
+            ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
+            ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
+            ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
+            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
+            ->leftJoin('gd_documentos as d', function ($join) {
+                $join->on('d.IDPredio', '=', 'p.IDPredio')
+                    ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
+            })
+            ->leftJoin('arch_archivos as a', 'a.IDObjetoPadreArchivo', '=', 'd.IDDocumento');
+
+        $query = $this->aplicarFiltrosComunes($query, $request);
+
+        $resultados = $query->select(
+            'p.NombrePredio as predio',
+            'g.NombreGrupoDoc as grupo',
+            DB::raw('CASE WHEN COUNT(a.IDArchivo) > 0 THEN 100 ELSE 0 END as cumplimiento')
+        )
+            ->groupBy('p.NombrePredio', 'g.NombreGrupoDoc')
+            ->get();
+
+        return response()->json($resultados->map(fn($item) => [
+            'x' => $item->grupo,
+            'y' => $item->predio,
+            'v' => (int) $item->cumplimiento
+        ]));
     }
 
     public function calificacionesPonderadasPorPredio(Request $request)
     {
-        $predioIds = $request->input('predio_ids', []);
-
         $query = DB::table('conf_predios as p')
+            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
+            ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
+            ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
+            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
             ->leftJoin('gd_documentos as d', function ($join) {
                 $join->on('d.IDPredio', '=', 'p.IDPredio')
                     ->on('d.IDTipoDocumento', '=', 'do.IDTipoDocumento');
@@ -340,10 +441,7 @@ class ReporteDocumentosController extends Controller
                 $join->on('a.IDObjetoPadreArchivo', '=', 'd.IDDocumento');
             });
 
-        // Si se envían IDs, aplicamos el filtro
-        if (!empty($predioIds)) {
-            $query->whereIn('p.IDPredio', $predioIds);
-        }
+        $query = $this->aplicarFiltrosComunes($query, $request);
 
         $datos = $query->select(
             'p.NombrePredio as predio',
@@ -354,7 +452,6 @@ class ReporteDocumentosController extends Controller
             ->orderBy('p.NombrePredio')
             ->get();
 
-        // La transformación de datos no cambia
         $labels = $datos->pluck('predio');
         $creados = $datos->pluck('cumplimiento_creados');
         $anexados = $datos->pluck('cumplimiento_anexados');
@@ -362,90 +459,12 @@ class ReporteDocumentosController extends Controller
         return response()->json([
             'labels' => $labels,
             'datasets' => [
-                [
-                    'label' => '% Documentos creados',
-                    'data' => $creados,
-                    'backgroundColor' => '#4ade80' // Verde
-                ],
-                [
-                    'label' => '% Con archivo',
-                    'data' => $anexados,
-                    'backgroundColor' => '#60a5fa' // Azul
-                ]
+                ['label' => '% Documentos creados', 'data' => $creados, 'backgroundColor' => '#4ade80'],
+                ['label' => '% Con archivo', 'data' => $anexados, 'backgroundColor' => '#60a5fa']
             ]
         ]);
     }
 
-    public function matrizPorGrupo(Request $request)
-    {
-        $predioIds = $request->input('predio_ids', []);
-
-        $query = DB::table('conf_predios as p')
-            ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
-            ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
-            ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
-            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
-            ->leftJoin('gd_documentos as d', function ($join) {
-                $join->on('d.IDPredio', '=', 'p.IDPredio')
-                    ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
-            });
-
-        if (!empty($predioIds)) {
-            $query->whereIn('p.IDPredio', $predioIds);
-        }
-
-        $resultados = $query->select(
-            'p.NombrePredio as predio',
-            'g.NombreGrupoDoc as grupo',
-            DB::raw('ROUND((COUNT(d.IDDocumento) * 100.0) / COUNT(*), 2) as cumplimiento')
-        )
-            ->groupBy('p.NombrePredio', 'g.NombreGrupoDoc')
-            ->get();
-
-        $data = $resultados->map(fn($item) => [
-            'x' => $item->grupo,
-            'y' => $item->predio,
-            'v' => (float) $item->cumplimiento
-        ]);
-
-        return response()->json($data);
-    }
-
-    public function matrizArchivosPorGrupo(Request $request)
-    {
-        $predioIds = $request->input('predio_ids', []);
-
-        $query = DB::table('conf_predios as p')
-            ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
-            ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
-            ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
-            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
-            ->leftJoin('gd_documentos as d', function ($join) {
-                $join->on('d.IDPredio', '=', 'p.IDPredio')
-                    ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
-            })
-            ->leftJoin('arch_archivos as a', 'a.IDObjetoPadreArchivo', '=', 'd.IDDocumento');
-
-        if (!empty($predioIds)) {
-            $query->whereIn('p.IDPredio', $predioIds);
-        }
-
-        $resultados = $query->select(
-            'p.NombrePredio as predio',
-            'g.NombreGrupoDoc as grupo',
-            DB::raw('CASE WHEN COUNT(a.IDArchivo) > 0 THEN 100 ELSE 0 END as cumplimiento')
-        )
-            ->groupBy('p.NombrePredio', 'g.NombreGrupoDoc')
-            ->get();
-
-        $data = $resultados->map(fn($item) => [
-            'x' => $item->grupo,
-            'y' => $item->predio,
-            'v' => (int) $item->cumplimiento
-        ]);
-
-        return response()->json($data);
-    }
 
     public function estadoAccionesPorRenovacion(Request $request)
     {
@@ -475,7 +494,7 @@ class ReporteDocumentosController extends Controller
             ->leftJoin('track_estados as s', 's.IDEstado', '=', 'ti.IDEstadoActualInstancia');
 
         // Aplicamos todos los filtros si se proporcionan
-       // Usa whereIn para filtrar por múltiples grupos y categorías
+        // Usa whereIn para filtrar por múltiples grupos y categorías
         if (!empty($predioIds)) {
             $query->whereIn('p.IDPredio', $predioIds);
         }
@@ -528,5 +547,43 @@ class ReporteDocumentosController extends Controller
         ]);
 
         return response()->json($data);
+    }
+
+
+    public function documentosConEstadoPorCategoria(Request $request)
+    {
+        // La base de la consulta para obtener los documentos obligatorios
+        $query = DB::table('conf_predios as p')
+            ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
+            ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
+            ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
+            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
+
+            // Cruzamos con los documentos existentes para saber si fueron creados
+            ->leftJoin('gd_documentos as d', function ($join) {
+                $join->on('d.IDPredio', '=', 'p.IDPredio')
+                    ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
+            })
+
+            // Cruzamos con el sistema de tracking para obtener el estado del documento
+            ->leftJoin('track_instancias as ti', 'ti.IDInstancia', '=', 'd.IDDocumento')
+            ->leftJoin('track_estados as s', 's.IDEstado', '=', 'ti.IDEstadoActualInstancia');
+
+        // Reutilizamos la función que ya teníamos para aplicar los filtros del dashboard
+        $query = $this->aplicarFiltrosComunes($query, $request);
+
+        $resultados = $query->select(
+            'p.NombrePredio as predio',
+            'g.NombreGrupoDoc as categoria',
+            'td.NombreTipoDocumento as documento',
+            DB::raw("CASE WHEN d.IDDocumento IS NOT NULL THEN 'CREADO' ELSE 'FALTANTE' END as estado_documento"),
+            's.NombreEstado as estado_accion'
+        )
+            ->orderBy('p.NombrePredio')
+            ->orderBy('g.NombreGrupoDoc')
+            ->orderBy('td.NombreTipoDocumento')
+            ->get();
+
+        return response()->json($resultados);
     }
 }

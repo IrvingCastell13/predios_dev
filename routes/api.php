@@ -64,3 +64,10 @@ Route::put('/equipos/{id}', [EquipoController::class, 'update'])->name('equipos.
 // Endpoints para funcionalidades adicionales
 Route::post('/equipos/update-archivos', [EquipoController::class, 'updateArchivos'])->name('equipo.updateArchivos');
 Route::post('/equipos-pdf', [EquipoController::class, 'generarPDF'])->name('equiposPDF');
+
+// Rutas para los nuevos filtros del dashboard de cumplimiento
+Route::get('/bi/listar-tipos-documento', [ReporteDocumentosController::class, 'listarTiposDocumento']);
+Route::get('/bi/listar-tipos-inmueble', [ReporteDocumentosController::class, 'listarTiposInmueble']);
+
+// Ruta para la nueva pestaña de Vigencia
+Route::get('/bi/documentos-con-estado', [ReporteDocumentosController::class, 'documentosConEstadoPorCategoria']);

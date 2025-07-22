@@ -11,10 +11,11 @@ import EquiposIndex from './components/Equipos/Index.vue';
 
 const reportesAppDiv = document.getElementById('app');
 if (reportesAppDiv) {
-    createApp(GraficasReportes).mount(reportesAppDiv);
+    const pinia = createPinia(); // <-- Se crea una instancia de Pinia
+    const app = createApp(GraficasReportes);
+    app.use(pinia); // <-- Se le dice a esta app que use Pinia
+    app.mount(reportesAppDiv);
 }
-
-
 
 const renovacionApp = document.getElementById('app-renovacion'); // <-- ID cambiado
 

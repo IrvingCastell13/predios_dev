@@ -114,7 +114,7 @@
 
 <script setup>
 
-
+import axios from 'axios';
 import eventBus from '../eventBus';
 import { onMounted, ref } from 'vue';
 import { useFuncionesStore } from '../stores/funciones/Funciones';

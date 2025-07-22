@@ -23,7 +23,13 @@ export default {
   props: {
     apiUrl: { type: String, required: true },
     chartTitle: { type: String, required: true },
-    idPredios: { type: Array, required: true }
+    idPredios: { type: Array, required: true },
+    idGrupos: { type: Array, required: true },
+    idCategorias: { type: Array, required: true },
+    // --- INICIO: Nuevos props ---
+    idTiposDocumento: { type: Array, required: true },
+    idTiposInmueble: { type: Array, required: true }
+    // --- FIN: Nuevos props ---
   },
   data() {
     return {
@@ -46,11 +52,25 @@ export default {
                 y: { stacked: false }
             }
         }
+    },
+    filtros() {
+        return {
+            predios: this.idPredios,
+            grupos: this.idGrupos,
+            categorias: this.idCategorias,
+              // --- INICIO: Añadir a filtros ---
+            tiposDocumento: this.idTiposDocumento,
+            tiposInmueble: this.idTiposInmueble
+            // --- FIN: Añadir a filtros ---
+        };
     }
   },
   watch: {
-    idPredios: {
-        handler() { this.fetchData(); },
+    filtros: {
+        handler() {
+            this.fetchData();
+        },
+        deep: true,
         immediate: true
     }
   },
@@ -59,11 +79,17 @@ export default {
         this.isLoading = true;
         this.chartData = null;
 
-        
-
         try {
             const response = await axios.get(this.apiUrl, {
-                params: { predio_ids: this.idPredios }
+                params: {
+                    predio_ids: this.idPredios,
+                    grupo_ids: this.idGrupos,
+                    categoria_ids: this.idCategorias,
+                      // --- INICIO: Enviar nuevos filtros ---
+                    tipo_doc_ids: this.idTiposDocumento,
+                    tipo_inmueble_ids: this.idTiposInmueble
+                    // --- FIN: Enviar nuevos filtros ---
+                }
             });
             this.chartData = response.data;
         } catch (error) {
