@@ -603,4 +603,56 @@ class ReporteDocumentosController extends Controller
 
         return response()->json($data);
     }
+
+
+    public function documentosPorSubcategoria(Request $request)
+    {
+        // La base de la consulta es la misma que la anterior
+        $query = DB::table('conf_predios as p')
+            ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
+            ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
+            ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
+            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
+            ->leftJoin('gd_documentos as d', function ($join) {
+                $join->on('d.IDPredio', '=', 'p.IDPredio')
+                    ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
+            })
+            ->leftJoin('track_instancias as ti', 'ti.IDInstancia', 'd.IDDocumento')
+            ->leftJoin('track_estados as s', 's.IDEstado', '=', 'ti.IDEstadoActualInstancia');
+
+        // Reutilizamos la misma función para aplicar todos los filtros
+        $query = $this->aplicarFiltrosComunes($query, $request);
+
+        $resultados = $query->select(
+            'p.NombrePredio as predio',
+            'cat.NombreCategoriaDoc as subcategoria', // El cambio principal es agrupar por subcategoría
+            'td.NombreTipoDocumento as documento',
+            DB::raw("CASE WHEN d.IDDocumento IS NOT NULL THEN 'CREADO' ELSE 'FALTANTE' END as estado_documento"),
+            's.NombreEstado as estado_accion',
+            's.IDEstado as estado_id'
+        )
+            ->orderBy('p.NombrePredio')
+            ->orderBy('cat.NombreCategoriaDoc')
+            ->orderBy('td.NombreTipoDocumento')
+            ->get();
+
+        // Mapeamos los resultados al formato {x, y, v} que la matriz necesita
+        $data = $resultados->map(function ($item) {
+            $estado = 'FALTANTE';
+            if ($item->estado_documento === 'CREADO') {
+                $estado = $item->estado_accion ?? 'Pendiente';
+            }
+
+            return [
+                'x' => $item->documento,
+                'y' => $item->predio,
+                'v' => $item->estado_id,
+                'estado' => $estado,
+                // Añadimos la subcategoría para poder agrupar en el frontend si es necesario
+                'subcategoria' => $item->subcategoria
+            ];
+        });
+
+        return response()->json($data);
+    }
 }

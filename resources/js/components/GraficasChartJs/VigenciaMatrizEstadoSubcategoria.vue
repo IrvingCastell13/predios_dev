@@ -12,16 +12,13 @@
 
 <script>
 import { Chart as ChartJS, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
-// Importamos el controlador y el elemento de la matriz
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 import axios from 'axios';
 
-// Registramos los componentes de la matriz
 ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, MatrixController, MatrixElement);
 
 export default {
-    name: 'VigenciaMatrizEstadoCategoria',
-    // Ya no se usa el componente <Bar>
+    name: 'VigenciaMatrizEstadoSubcategoria',
     props: {
         apiUrl: { type: String, required: true },
         idPredios: { type: Array, required: true },
@@ -32,7 +29,7 @@ export default {
     },
     data() {
         return {
-            chart: null, // Guardaremos la instancia del gráfico aquí
+            chart: null,
             isLoading: true,
             chartDataIsEmpty: false,
             cancelTokenSource: null
@@ -87,7 +84,7 @@ export default {
                     console.log('Solicitud cancelada:', error.message);
                 } else {
                     this.chartDataIsEmpty = true;
-                    console.error('Error al cargar datos para la matriz de vigencia:', error);
+                    console.error('Error al cargar datos para la matriz de vigencia por subcategoría:', error);
                 }
             } finally {
                 this.isLoading = false;
@@ -99,34 +96,34 @@ export default {
                 return;
             }
 
-             const cellWidth = 120;
-            const cellHeight = 40;
-
             const allX = [...new Set(data.map(d => d.x))].sort();
             const allY = [...new Set(data.map(d => d.y))].sort();
 
             const colorMap = {
-                'estado-03': '#4ade80',  // Ejecutado (Verde)
-                'estado-02': '#60a5fa',  // En Proceso (Azul)
-                'estado-01': '#facc15',  // Pendiente (Amarillo)
-                 null: '#f87171'         // Faltante (Rojo)
+                'estado-03': '#4ade80',  // Ejecutado
+                'estado-02': '#60a5fa',  // En Proceso
+                'estado-01': '#facc15',  // Pendiente
+                 null: '#f87171'         // Faltante (cuando el estado_id es null)
             };
 
+            const cellWidth = 120;
+            const cellHeight = 40;
             const ctx = this.$refs.canvasRef.getContext('2d');
+            
             this.chart = new ChartJS(ctx, {
-                type: 'matrix', // <-- Tipo de gráfica corregido a 'matrix'
+                type: 'matrix',
                 data: {
                     datasets: [{
                         label: 'Estado',
                         data: data,
                         backgroundColor: (ctx) => {
                             const value = ctx.raw.v;
-                            return colorMap[value] || '#e5e7eb'; // Gris para estados desconocidos
+                            return colorMap[value] || '#e5e7eb';
                         },
                         borderWidth: 2,
                         borderColor: '#ffffff',
                         width: () => cellWidth,
-                        height: () => cellHeight,
+                        height: () => cellHeight
                     }]
                 },
                 options: {
@@ -141,11 +138,11 @@ export default {
                         },
                         title: {
                             display: true,
-                            text: 'Matriz de Estado de Documentos por Categoría'
+                            text: 'Matriz de Estado de Documentos por Subcategoría'
                         }
                     },
                     scales: {
-                        x: { type: 'category', labels: allX, ticks: { autoSkip: false } },
+                        x: { type: 'category', labels: allX, ticks: { autoSkip: false, font: { size: 10 } } },
                         y: { type: 'category', labels: allY, offset: true, reverse: true }
                     }
                 }

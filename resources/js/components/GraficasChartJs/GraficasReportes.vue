@@ -238,7 +238,8 @@
       </div>
 
       <div v-if="activeTab === 'Vigencia'">
-        <div class="card">
+        <div class="card mb-5">
+          
           <div class="card-header">
             Matriz de Estado de Documentos por Categoría
           </div>
@@ -250,6 +251,22 @@
               :id-tipos-documento="idTiposDocumentoSeleccionados"
               :id-tipos-inmueble="idTiposInmuebleSeleccionados"
               api-url="/api/bi/documentos-con-estado"
+            />
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            Matriz de Estado de Documentos por Subcategoría
+          </div>
+          <div class="card-body">
+            <VigenciaMatrizEstadoSubcategoria
+              :id-predios="idPrediosSeleccionados"
+              :id-grupos="idGruposSeleccionados"
+              :id-categorias="idCategoriasSeleccionadas"
+              :id-tipos-documento="idTiposDocumentoSeleccionados"
+              :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+              api-url="/api/bi/documentos-por-subcategoria"
             />
           </div>
         </div>
@@ -279,6 +296,9 @@ import HorizontalPonderadoPorPredio from "./HorizontalPonderadoPorPredio.vue";
 import MatrizPorGrupo from "./MatrizPorGrupo.vue";
 import MatrizArchivosPorGrupo from "./MatrizArchivosPorGrupo.vue";
 import VigenciaMatrizEstadoCategoria from "./VigenciaMatrizEstadoCategoria.vue";
+import VigenciaMatrizEstadoSubcategoria from './VigenciaMatrizEstadoSubcategoria.vue'; 
+
+
 export default {
   components: {
     VueMultiselect,
@@ -289,6 +309,7 @@ export default {
     MatrizPorGrupo,
     MatrizArchivosPorGrupo,
     VigenciaMatrizEstadoCategoria,
+     VigenciaMatrizEstadoSubcategoria,
   },
   data() {
     return {

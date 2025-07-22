@@ -71,3 +71,4 @@ Route::get('/bi/listar-tipos-inmueble', [ReporteDocumentosController::class, 'li
 
 // Ruta para la nueva pestaña de Vigencia
 Route::get('/bi/documentos-con-estado', [ReporteDocumentosController::class, 'documentosConEstadoPorCategoria']);
+Route::get('/bi/documentos-por-subcategoria', [ReporteDocumentosController::class, 'documentosPorSubcategoria']);
