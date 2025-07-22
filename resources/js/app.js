@@ -9,14 +9,11 @@ import DashboardMantenimiento from './components/DashboardMantenimiento/Dashboar
 import { createPinia } from 'pinia'; // Importar Pinia
 import EquiposIndex from './components/Equipos/Index.vue';
 
-// Crea la instancia de la aplicación Vue
-const app = createApp({});
+const reportesAppDiv = document.getElementById('app');
+if (reportesAppDiv) {
+    createApp(GraficasReportes).mount(reportesAppDiv);
+}
 
-// Registra tu componente de forma global con la etiqueta <graficas-reportes>
-app.component('graficas-reportes', GraficasReportes);
-
-// Monta la aplicación en el elemento con id="app" de tu archivo Blade
-app.mount('#app');
 
 
 const renovacionApp = document.getElementById('app-renovacion'); // <-- ID cambiado
