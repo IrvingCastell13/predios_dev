@@ -49,18 +49,18 @@ Route::get('/bi/listar-categorias-doc', [ReporteDocumentosController::class, 'li
 
 
 
-// Rutas para los selects y filtros
+// Endpoints para poblar los dropdowns de los filtros
 Route::get('/obtener-sistemas-equipos', [EquipoController::class, 'obtenerSistemas'])->name('obtenerSistemasEquiposCliente');
 Route::get('/obtener-subsistemas-equipos', [EquipoController::class, 'obtenerSubsistemas'])->name('obtenerSubsistemasEquiposCliente');
 Route::get('/obtener-tipos-equipos', [EquipoController::class, 'obtenerTipos'])->name('tipoEquipos.index');
 Route::get('/obtener-equipos-cliente', [EquipoController::class, 'obtenerEquiposCliente'])->name('obtenerEquiposCliente');
 
-// Rutas para el CRUD de Equipos
+// Endpoints para el CRUD principal de Equipos (Create, Read, Update, Delete)
 Route::get('/equipos', [EquipoController::class, 'index'])->name('equipos.index');
 Route::post('/equipos', [EquipoController::class, 'store'])->name('equipos.store');
 Route::get('/equipos/{id}', [EquipoController::class, 'show'])->name('equipos.show');
 Route::put('/equipos/{id}', [EquipoController::class, 'update'])->name('equipos.update');
 
-// Rutas para funcionalidades extra
+// Endpoints para funcionalidades adicionales
 Route::post('/equipos/update-archivos', [EquipoController::class, 'updateArchivos'])->name('equipo.updateArchivos');
 Route::post('/equipos-pdf', [EquipoController::class, 'generarPDF'])->name('equiposPDF');

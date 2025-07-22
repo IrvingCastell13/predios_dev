@@ -5,8 +5,8 @@ import { createApp } from 'vue';
 import GraficasReportes from './components/GraficasChartJs/GraficasReportes.vue';
 import DashboardRenovacion from './components/DashboardRenovacion/DashboardRenovacion.vue'; // <-- Ruta cambiada
 import DashboardMantenimiento from './components/DashboardMantenimiento/DashboardMantenimiento.vue';
-// import EquiposIndex from './components/Equipos/Index.vue';
-
+import { createPinia } from 'pinia'; // Importar Pinia
+import EquiposIndex from './components/Equipos/Index.vue';
 
 // Crea la instancia de la aplicación Vue
 const app = createApp({});
@@ -31,8 +31,11 @@ if (mantenimientoApp) {
     createApp(DashboardMantenimiento).mount(mantenimientoApp);
 }
 
-// const equiposApp = document.getElementById('app-equipos');
-// if (equiposApp) {
-//     app.component('EquiposIndex', EquiposIndex);
-//     app.mount(equiposApp);
-// }
+const equiposAppDiv = document.getElementById('app-equipos');
+
+if (equiposAppDiv) {
+    const pinia = createPinia(); // Crear una instancia de Pinia
+    const app = createApp(EquiposIndex); // Usar EquiposIndex como componente raíz
+    app.use(pinia); // Usar Pinia en la aplicación
+    app.mount(equiposAppDiv);
+}
