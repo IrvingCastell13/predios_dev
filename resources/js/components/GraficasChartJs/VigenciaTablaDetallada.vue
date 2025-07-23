@@ -1,6 +1,6 @@
 <template>
     <div>
-        <!-- SECCIÓN DE CARGA Y DATOS VACÍOS (Sin cambios) -->
+        <!-- SECCIÓN DE CARGA Y DATOS VACÍOS -->
         <div v-if="isLoading" class="text-center text-secondary py-4">
             Cargando datos de la tabla...
         </div>
@@ -8,43 +8,58 @@
             No hay datos para la selección actual.
         </div>
 
-        <!-- CONTENEDOR DE LA TABLA -->
-        <!-- La tabla ahora tiene un 'ref' para poder ser seleccionada por DataTables -->
-        <div v-else class="table-responsive">
-            <table ref="tablaDetallada" class="table table-striped table-hover table-sm" style="width:100%">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Predio</th>
-                        <th scope="col">Categoría</th>
-                        <th scope="col">Subcategoría</th>
-                        <th scope="col">Tipo de Documento</th>
-                        <th scope="col">Estado Documento</th>
-                        <th scope="col">Estado Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Vue sigue renderizando las filas como antes -->
-                    <tr v-for="(doc, index) in documentos" :key="index" :class="getRowClass(doc)">
-                        <td>{{ doc.predio }}</td>
-                        <td>{{ doc.categoria }}</td>
-                        <td>{{ doc.subcategoria }}</td>
-                        <td>{{ doc.tipo_documento }}</td>
-                        <td>{{ doc.estado_documento }}</td>
-                        <td>{{ doc.estado_accion || '-' }}</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- CONTENEDOR DE LA TABLA Y PAGINACIÓN -->
+        <div v-else>
+            <!-- TABLA (Ahora itera sobre 'paginatedDocumentos') -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Predio</th>
+                            <th scope="col">Categoría</th>
+                            <th scope="col">Subcategoría</th>
+                            <th scope="col">Tipo de Documento</th>
+                            <th scope="col">Estado Documento</th>
+                            <th scope="col">Estado Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Se itera sobre la data ya paginada -->
+                        <tr v-for="(doc, index) in paginatedDocumentos" :key="index" :class="getRowClass(doc)">
+                            <td>{{ doc.predio }}</td>
+                            <td>{{ doc.categoria }}</td>
+                            <td>{{ doc.subcategoria }}</td>
+                            <td>{{ doc.tipo_documento }}</td>
+                            <td>{{ doc.estado_documento }}</td>
+                            <td>{{ doc.estado_accion || '-' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- NAVEGACIÓN DE PAGINACIÓN -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <span class="text-muted small">
+                    Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} a {{ Math.min(currentPage * itemsPerPage, documentos.length) }} de {{ documentos.length }} registros
+                </span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                            <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)">&laquo; Anterior</a>
+                        </li>
+                        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                            <a class="page-link" href="#" @click.prevent="changePage(currentPage + 1)">Siguiente &raquo;</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            
         </div>
     </div>
 </template>
 
 <script>
 import axios from 'axios';
-// Importamos nextTick de Vue para asegurarnos de que el DOM está listo
-import { nextTick } from 'vue';
-
-// Asegúrate de que jQuery está disponible globalmente (lo estará si usaste el CDN)
-const $ = window.jQuery;
 
 export default {
     name: 'VigenciaTablaDetallada',
@@ -58,10 +73,12 @@ export default {
     },
     data() {
         return {
-            documentos: [],
+            documentos: [], // Almacena TODOS los documentos de la API
             isLoading: true,
             cancelTokenSource: null,
-            dataTableInstance: null, // Guardará la instancia de DataTables
+            // --- DATOS PARA PAGINACIÓN ---
+            currentPage: 1,      // Página actual
+            itemsPerPage: 10,    // Registros a mostrar por página
         };
     },
     computed: {
@@ -73,10 +90,26 @@ export default {
                 tiposDocumento: this.idTiposDocumento,
                 tiposInmueble: this.idTiposInmueble,
             };
+        },
+        
+        /**
+         * Calcula el número total de páginas necesarias.
+         */
+        totalPages() {
+            if (!this.documentos || this.documentos.length === 0) return 1;
+            return Math.ceil(this.documentos.length / this.itemsPerPage);
+        },
+
+        /**
+         * Devuelve solo la porción de documentos que corresponde a la página actual.
+         */
+        paginatedDocumentos() {
+            const start = (this.currentPage - 1) * this.itemsPerPage;
+            const end = start + this.itemsPerPage;
+            return this.documentos.slice(start, end);
         }
     },
     watch: {
-        // El watcher se mantiene, es el que dispara la actualización de datos
         filtros: {
             handler() { this.fetchData(); },
             deep: true,
@@ -86,17 +119,6 @@ export default {
     methods: {
         async fetchData() {
             this.isLoading = true;
-            
-            // Destruimos la instancia anterior de DataTables antes de una nueva búsqueda
-            // para evitar errores y duplicados.
-            if (this.dataTableInstance) {
-                this.dataTableInstance.destroy();
-                this.dataTableInstance = null;
-            }
-
-            // Limpiamos los documentos para que la tabla desaparezca mientras se cargan los nuevos datos
-            this.documentos = [];
-
             if (this.cancelTokenSource) {
                 this.cancelTokenSource.cancel('Nueva solicitud iniciada.');
             }
@@ -113,80 +135,43 @@ export default {
                     },
                     cancelToken: this.cancelTokenSource.token
                 });
-                
                 this.documentos = response.data;
-
-                // Usamos nextTick para esperar a que Vue actualice el DOM con los nuevos datos.
-                // Solo después de eso, inicializamos DataTables.
-                await nextTick();
-                
-                if (this.documentos.length > 0) {
-                    this.initDataTable();
-                }
-
+                this.currentPage = 1; // Resetear a la página 1 con cada nueva búsqueda
             } catch (error) {
                 if (axios.isCancel(error)) {
                     console.log('Solicitud cancelada:', error.message);
                 } else {
                     console.error('Error al cargar datos para la tabla detallada:', error);
-                    this.documentos = [];
+                    this.documentos = []; // Limpiar en caso de error
                 }
             } finally {
                 this.isLoading = false;
             }
         },
-
+        
         /**
-         * Inicializa la librería DataTables en nuestra tabla.
+         * Cambia la página actual, asegurándose de no salirse de los límites.
          */
-        initDataTable() {
-            // Usamos el 'ref' de la tabla para inicializar DataTables
-            this.dataTableInstance = $(this.$refs.tablaDetallada).DataTable({
-                responsive: true,
-                pageLength: 10, // Número de registros por página por defecto
-                lengthMenu: [10, 25, 50, 100], // Opciones para el usuario
-                language: { // Traducción al español
-                    "sProcessing":     "Procesando...",
-                    "sLengthMenu":     "Mostrar _MENU_ registros",
-                    "sZeroRecords":    "No se encontraron resultados",
-                    "sEmptyTable":     "Ningún dato disponible en esta tabla",
-                    "sInfo":           "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                    "sInfoEmpty":      "Mostrando registros del 0 al 0 de un total de 0 registros",
-                    "sInfoFiltered":   "(filtrado de un total de _MAX_ registros)",
-                    "sInfoPostFix":    "",
-                    "sSearch":         "Buscar:",
-                    "sUrl":            "",
-                    "sInfoThousands":  ",",
-                    "sLoadingRecords": "Cargando...",
-                    "oPaginate": {
-                        "sFirst":    "Primero",
-                        "sLast":     "Último",
-                        "sNext":     "Siguiente",
-                        "sPrevious": "Anterior"
-                    },
-                    "oAria": {
-                        "sSortAscending":  ": Activar para ordenar la columna de manera ascendente",
-                        "sSortDescending": ": Activar para ordenar la columna de manera descendente"
-                    }
-                }
-            });
+        changePage(page) {
+            if (page >= 1 && page <= this.totalPages) {
+                this.currentPage = page;
+            }
         },
 
         getRowClass(doc) {
-            if (doc.estado_documento === 'FALTANTE') return 'table-danger';
-            if (doc.estado_accion === 'Ejecutado') return 'table-success';
-            if (doc.estado_accion === 'Pendiente') return 'table-warning';
-            if (doc.estado_accion === 'En Proceso') return 'table-info';
+            if (doc.estado_documento === 'FALTANTE') {
+                return 'table-danger';
+            }
+            if (doc.estado_accion === 'Ejecutado') {
+                return 'table-success';
+            }
+            if (doc.estado_accion === 'Pendiente') {
+                return 'table-warning';
+            }
+            if (doc.estado_accion === 'En Proceso') {
+                return 'table-info';
+            }
             return '';
-        }
-    },
-    /**
-     * Es una buena práctica destruir la instancia de DataTables cuando
-     * el componente de Vue se elimina para liberar memoria.
-     */
-    beforeUnmount() {
-        if (this.dataTableInstance) {
-            this.dataTableInstance.destroy();
         }
     }
 };
