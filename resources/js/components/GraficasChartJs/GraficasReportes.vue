@@ -45,11 +45,9 @@
                 <div class="card-body">
                   <div class="row align-items-end">
                     <div class="col-md-3">
-                      <label class="form-label fw-bold"
-                        >Filtro de Predios:</label
-                      >
+                      <label class="form-label fw-bold">Predio:</label>
                       <vue-multiselect
-                        v-model="prediosSeleccionados"
+                        v-model="filtrosCumplimiento.prediosSeleccionados"
                         :options="prediosDisponibles"
                         :multiple="true"
                         :close-on-select="false"
@@ -63,7 +61,7 @@
                         >Categoría (Grupo):</label
                       >
                       <vue-multiselect
-                        v-model="gruposSeleccionados"
+                        v-model="filtrosCumplimiento.gruposSeleccionados"
                         :options="gruposDisponibles"
                         :multiple="true"
                         :close-on-select="false"
@@ -75,11 +73,13 @@
                     <div class="col-md-3">
                       <label class="form-label fw-bold">Subcategoría:</label>
                       <vue-multiselect
-                        v-model="categoriasSeleccionadas"
+                        v-model="filtrosCumplimiento.categoriasSeleccionadas"
                         :options="categoriasDisponibles"
                         :multiple="true"
                         :close-on-select="false"
-                        :disabled="gruposSeleccionados.length === 0"
+                        :disabled="
+                          filtrosCumplimiento.gruposSeleccionados.length === 0
+                        "
                         placeholder="Seleccione categoría"
                         label="NombreCategoriaDoc"
                         track-by="IDCategoriaDoc"
@@ -90,7 +90,9 @@
                         >Tipo de Documento:</label
                       >
                       <vue-multiselect
-                        v-model="tiposDocumentoSeleccionados"
+                        v-model="
+                          filtrosCumplimiento.tiposDocumentoSeleccionados
+                        "
                         :options="tiposDocumentoDisponibles"
                         :multiple="true"
                         :close-on-select="false"
@@ -104,7 +106,7 @@
                         >Tipo de Inmueble:</label
                       >
                       <vue-multiselect
-                        v-model="tiposInmuebleSeleccionados"
+                        v-model="filtrosCumplimiento.tiposInmuebleSeleccionados"
                         :options="tiposInmuebleDisponibles"
                         :multiple="true"
                         :close-on-select="false"
@@ -126,11 +128,15 @@
                       </div>
                       <div class="card-body">
                         <base-heatmap-matrix
-                          :id-predios="idPrediosSeleccionados"
-                          :id-grupos="idGruposSeleccionados"
-                          :id-categorias="idCategoriasSeleccionadas"
-                          :id-tipos-documento="idTiposDocumentoSeleccionados"
-                          :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+                          :id-predios="idPrediosSeleccionadosCumplimiento"
+                          :id-grupos="idGruposSeleccionadosCumplimiento"
+                          :id-categorias="idCategoriasSeleccionadasCumplimiento"
+                          :id-tipos-documento="
+                            idTiposDocumentoSeleccionadosCumplimiento
+                          "
+                          :id-tipos-inmueble="
+                            idTiposInmuebleSeleccionadosCumplimiento
+                          "
                           api-url="/api/bi/matriz-subcategoria"
                           chart-title="Cumplimiento por Predio vs. SubCategoría"
                         >
@@ -145,11 +151,15 @@
                       </div>
                       <div class="card-body">
                         <base-heatmap-matrix-archivos
-                          :id-predios="idPrediosSeleccionados"
-                          :id-grupos="idGruposSeleccionados"
-                          :id-categorias="idCategoriasSeleccionadas"
-                          :id-tipos-documento="idTiposDocumentoSeleccionados"
-                          :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+                          :id-predios="idPrediosSeleccionadosCumplimiento"
+                          :id-grupos="idGruposSeleccionadosCumplimiento"
+                          :id-categorias="idCategoriasSeleccionadasCumplimiento"
+                          :id-tipos-documento="
+                            idTiposDocumentoSeleccionadosCumplimiento
+                          "
+                          :id-tipos-inmueble="
+                            idTiposInmuebleSeleccionadosCumplimiento
+                          "
                           api-url="/api/bi/matriz-subcategoria-archivos"
                           chart-title="SubCategorías con o sin archivo adjunto por Predio"
                         >
@@ -166,11 +176,15 @@
                       </div>
                       <div class="card-body">
                         <matriz-por-grupo
-                          :id-predios="idPrediosSeleccionados"
-                          :id-grupos="idGruposSeleccionados"
-                          :id-categorias="idCategoriasSeleccionadas"
-                          :id-tipos-documento="idTiposDocumentoSeleccionados"
-                          :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+                          :id-predios="idPrediosSeleccionadosCumplimiento"
+                          :id-grupos="idGruposSeleccionadosCumplimiento"
+                          :id-categorias="idCategoriasSeleccionadasCumplimiento"
+                          :id-tipos-documento="
+                            idTiposDocumentoSeleccionadosCumplimiento
+                          "
+                          :id-tipos-inmueble="
+                            idTiposInmuebleSeleccionadosCumplimiento
+                          "
                           api-url="/api/bi/matriz-grupo"
                           chart-title="Cumplimiento por Predio vs. Categoria de Documento"
                         >
@@ -185,11 +199,15 @@
                       </div>
                       <div class="card-body">
                         <matriz-archivos-por-grupo
-                          :id-predios="idPrediosSeleccionados"
-                          :id-grupos="idGruposSeleccionados"
-                          :id-categorias="idCategoriasSeleccionadas"
-                          :id-tipos-documento="idTiposDocumentoSeleccionados"
-                          :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+                          :id-predios="idPrediosSeleccionadosCumplimiento"
+                          :id-grupos="idGruposSeleccionadosCumplimiento"
+                          :id-categorias="idCategoriasSeleccionadasCumplimiento"
+                          :id-tipos-documento="
+                            idTiposDocumentoSeleccionadosCumplimiento
+                          "
+                          :id-tipos-inmueble="
+                            idTiposInmuebleSeleccionadosCumplimiento
+                          "
                           api-url="/api/bi/matriz-grupo-archivos"
                           chart-title="Archivos adjuntos por Predio vs. Categoria de Documento"
                         >
@@ -206,11 +224,15 @@
                       </div>
                       <div class="card-body">
                         <horizontal-ponderado-por-predio
-                          :id-predios="idPrediosSeleccionados"
-                          :id-grupos="idGruposSeleccionados"
-                          :id-categorias="idCategoriasSeleccionadas"
-                          :id-tipos-documento="idTiposDocumentoSeleccionados"
-                          :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+                          :id-predios="idPrediosSeleccionadosCumplimiento"
+                          :id-grupos="idGruposSeleccionadosCumplimiento"
+                          :id-categorias="idCategoriasSeleccionadasCumplimiento"
+                          :id-tipos-documento="
+                            idTiposDocumentoSeleccionadosCumplimiento
+                          "
+                          :id-tipos-inmueble="
+                            idTiposInmuebleSeleccionadosCumplimiento
+                          "
                           api-url="/api/bi/calificaciones-ponderadas"
                           chart-title="Cumplimiento ponderado por predio (%)"
                         >
@@ -238,17 +260,87 @@
       </div>
 
       <div v-if="activeTab === 'Vigencia'">
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row align-items-end">
+              <div class="col-md-3">
+                <label class="form-label fw-bold">Predio:</label>
+                <vue-multiselect
+                  v-model="filtrosVigencia.prediosSeleccionados"
+                  :options="prediosDisponibles"
+                  :multiple="true"
+                  :close-on-select="false"
+                  placeholder="Todos"
+                  label="NombrePredio"
+                  track-by="IDPredio"
+                ></vue-multiselect>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold">Categoría (Grupo):</label>
+                <vue-multiselect
+                  v-model="filtrosVigencia.gruposSeleccionados"
+                  :options="gruposDisponibles"
+                  :multiple="true"
+                  :close-on-select="false"
+                  placeholder="Todas"
+                  label="NombreGrupoDoc"
+                  track-by="IDGrupoDoc"
+                ></vue-multiselect>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold">Subcategoría:</label>
+                <vue-multiselect
+                  v-model="filtrosVigencia.categoriasSeleccionadas"
+                  :options="categoriasDisponibles"
+                  :multiple="true"
+                  :close-on-select="false"
+                  :disabled="
+                    filtrosVigencia.gruposSeleccionados.length === 0
+                  "
+                  placeholder="Seleccione categoría"
+                  label="NombreCategoriaDoc"
+                  track-by="IDCategoriaDoc"
+                ></vue-multiselect>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold">Tipo de Documento:</label>
+                <vue-multiselect
+                  v-model="filtrosVigencia.tiposDocumentoSeleccionados"
+                  :options="tiposDocumentoDisponibles"
+                  :multiple="true"
+                  :close-on-select="false"
+                  placeholder="Todos"
+                  label="NombreTipoDocumento"
+                  track-by="IDTipoDocumento"
+                ></vue-multiselect>
+              </div>
+              <div class="col-md-3 mt-3">
+                <label class="form-label fw-bold">Tipo de Inmueble:</label>
+                <vue-multiselect
+                  v-model="filtrosVigencia.tiposInmuebleSeleccionados"
+                  :options="tiposInmuebleDisponibles"
+                  :multiple="true"
+                  :close-on-select="false"
+                  placeholder="Todos"
+                  label="NombreTipoInmueble"
+                  track-by="IDTipoInmueble"
+                ></vue-multiselect>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="card mb-5">
           <div class="card-header">
             Matriz de Estado de Documentos por Categoría
           </div>
           <div class="card-body">
             <VigenciaMatrizEstadoCategoria
-              :id-predios="idPrediosSeleccionados"
-              :id-grupos="idGruposSeleccionados"
-              :id-categorias="idCategoriasSeleccionadas"
-              :id-tipos-documento="idTiposDocumentoSeleccionados"
-              :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+              :id-predios="idPrediosSeleccionadosVigencia"
+              :id-grupos="idGruposSeleccionadosVigencia"
+              :id-categorias="idCategoriasSeleccionadasVigencia"
+              :id-tipos-documento="idTiposDocumentoSeleccionadosVigencia"
+              :id-tipos-inmueble="idTiposInmuebleSeleccionadosVigencia"
               api-url="/api/bi/documentos-con-estado"
             />
           </div>
@@ -260,11 +352,11 @@
           </div>
           <div class="card-body">
             <VigenciaMatrizEstadoSubcategoria
-              :id-predios="idPrediosSeleccionados"
-              :id-grupos="idGruposSeleccionados"
-              :id-categorias="idCategoriasSeleccionadas"
-              :id-tipos-documento="idTiposDocumentoSeleccionados"
-              :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+              :id-predios="idPrediosSeleccionadosVigencia"
+              :id-grupos="idGruposSeleccionadosVigencia"
+              :id-categorias="idCategoriasSeleccionadasVigencia"
+              :id-tipos-documento="idTiposDocumentoSeleccionadosVigencia"
+              :id-tipos-inmueble="idTiposInmuebleSeleccionadosVigencia"
               api-url="/api/bi/documentos-por-subcategoria"
             />
           </div>
@@ -274,11 +366,11 @@
           <div class="card-header">Tabla Detallada de Documentos</div>
           <div class="card-body">
             <VigenciaTablaDetallada
-              :id-predios="idPrediosSeleccionados"
-              :id-grupos="idGruposSeleccionados"
-              :id-categorias="idCategoriasSeleccionadas"
-              :id-tipos-documento="idTiposDocumentoSeleccionados"
-              :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+              :id-predios="idPrediosSeleccionadosVigencia"
+              :id-grupos="idGruposSeleccionadosVigencia"
+              :id-categorias="idCategoriasSeleccionadasVigencia"
+              :id-tipos-documento="idTiposDocumentoSeleccionadosVigencia"
+              :id-tipos-inmueble="idTiposInmuebleSeleccionadosVigencia"
               api-url="/api/bi/tabla-detallada-vigencia"
             />
           </div>
@@ -329,57 +421,141 @@ export default {
     return {
       isReady: false,
       activeTab: "Cumplimiento",
+      // Datos para los dropdowns (comunes a ambos)
       prediosDisponibles: [],
       gruposDisponibles: [],
       categoriasDisponibles: [],
       tiposDocumentoDisponibles: [],
       tiposInmuebleDisponibles: [],
-      prediosSeleccionados: [],
-      gruposSeleccionados: [],
-      categoriasSeleccionadas: [],
-      tiposDocumentoSeleccionados: [],
-      tiposInmuebleSeleccionados: [],
+
+      // Estado de los filtros para la pestaña CUMPLIMIENTO
+      filtrosCumplimiento: {
+        prediosSeleccionados: [],
+        gruposSeleccionados: [],
+        categoriasSeleccionadas: [],
+        tiposDocumentoSeleccionados: [],
+        tiposInmuebleSeleccionados: [],
+      },
+
+      // Estado de los filtros para la pestaña VIGENCIA
+      filtrosVigencia: {
+        prediosSeleccionados: [],
+        gruposSeleccionados: [],
+        categoriasSeleccionadas: [],
+        tiposDocumentoSeleccionados: [],
+        tiposInmuebleSeleccionados: [],
+      },
     };
   },
   computed: {
-    idPrediosSeleccionados() {
-      return this.prediosSeleccionados.map((p) => p.IDPredio);
+    // --- Computeds para Cumplimiento ---
+    idPrediosSeleccionadosCumplimiento() {
+      return this.filtrosCumplimiento.prediosSeleccionados.map(
+        (p) => p.IDPredio
+      );
     },
-    idGruposSeleccionados() {
-      return this.gruposSeleccionados.map((g) => g.IDGrupoDoc);
+    idGruposSeleccionadosCumplimiento() {
+      return this.filtrosCumplimiento.gruposSeleccionados.map(
+        (g) => g.IDGrupoDoc
+      );
     },
-    idCategoriasSeleccionadas() {
-      return this.categoriasSeleccionadas.map((c) => c.IDCategoriaDoc);
+    idCategoriasSeleccionadasCumplimiento() {
+      return this.filtrosCumplimiento.categoriasSeleccionadas.map(
+        (c) => c.IDCategoriaDoc
+      );
     },
-    idTiposDocumentoSeleccionados() {
-      return this.tiposDocumentoSeleccionados.map((t) => t.IDTipoDocumento);
+    idTiposDocumentoSeleccionadosCumplimiento() {
+      return this.filtrosCumplimiento.tiposDocumentoSeleccionados.map(
+        (t) => t.IDTipoDocumento
+      );
     },
-    idTiposInmuebleSeleccionados() {
-      return this.tiposInmuebleSeleccionados.map((t) => t.IDTipoInmueble);
+    idTiposInmuebleSeleccionadosCumplimiento() {
+      return this.filtrosCumplimiento.tiposInmuebleSeleccionados.map(
+        (t) => t.IDTipoInmueble
+      );
+    },
+
+    // --- Computeds para Vigencia ---
+    idPrediosSeleccionadosVigencia() {
+      return this.filtrosVigencia.prediosSeleccionados.map((p) => p.IDPredio);
+    },
+    idGruposSeleccionadosVigencia() {
+      return this.filtrosVigencia.gruposSeleccionados.map((g) => g.IDGrupoDoc);
+    },
+    idCategoriasSeleccionadasVigencia() {
+      return this.filtrosVigencia.categoriasSeleccionadas.map(
+        (c) => c.IDCategoriaDoc
+      );
+    },
+    idTiposDocumentoSeleccionadosVigencia() {
+      return this.filtrosVigencia.tiposDocumentoSeleccionados.map(
+        (t) => t.IDTipoDocumento
+      );
+    },
+    idTiposInmuebleSeleccionadosVigencia() {
+      return this.filtrosVigencia.tiposInmuebleSeleccionados.map(
+        (t) => t.IDTipoInmueble
+      );
     },
   },
   watch: {
-    async gruposSeleccionados(newGrupos) {
-      const newGrupoIds = newGrupos.map((g) => g.IDGrupoDoc);
-      if (newGrupos && newGrupos.length > 0) {
-        try {
-          const response = await axios.get("/api/bi/listar-categorias-doc", {
-            params: { grupo_ids: newGrupoIds },
-          });
-          this.categoriasDisponibles = response.data;
-          this.categoriasSeleccionadas = this.categoriasSeleccionadas.filter(
-            (cat) =>
-              this.categoriasDisponibles.some(
-                (dispo) => dispo.IDCategoriaDoc === cat.IDCategoriaDoc
-              )
-          );
-        } catch (error) {
-          console.error("No se pudo cargar la lista de subcategorías:", error);
+    // Watcher para el filtro de grupos de CUMPLIMIENTO
+    "filtrosCumplimiento.gruposSeleccionados": {
+      async handler(newGrupos) {
+        const newGrupoIds = newGrupos.map((g) => g.IDGrupoDoc);
+        if (newGrupos && newGrupos.length > 0) {
+          try {
+            const response = await axios.get("/api/bi/listar-categorias-doc", {
+              params: { grupo_ids: newGrupoIds },
+            });
+            this.categoriasDisponiblesCumplimiento = response.data;
+            this.filtrosCumplimiento.categoriasSeleccionadas =
+              this.filtrosCumplimiento.categoriasSeleccionadas.filter((cat) =>
+                this.categoriasDisponiblesCumplimiento.some(
+                  (dispo) => dispo.IDCategoriaDoc === cat.IDCategoriaDoc
+                )
+              );
+          } catch (error) {
+            console.error(
+              "No se pudo cargar la lista de subcategorías para Cumplimiento:",
+              error
+            );
+          }
+        } else {
+          this.categoriasDisponiblesCumplimiento = [];
+          this.filtrosCumplimiento.categoriasSeleccionadas = [];
         }
-      } else {
-        this.categoriasDisponibles = [];
-        this.categoriasSeleccionadas = [];
-      }
+      },
+      deep: true,
+    },
+    // Watcher para el filtro de grupos de VIGENCIA
+    "filtrosVigencia.gruposSeleccionados": {
+      async handler(newGrupos) {
+        const newGrupoIds = newGrupos.map((g) => g.IDGrupoDoc);
+        if (newGrupos && newGrupos.length > 0) {
+          try {
+            const response = await axios.get("/api/bi/listar-categorias-doc", {
+              params: { grupo_ids: newGrupoIds },
+            });
+            this.categoriasDisponiblesVigencia = response.data;
+            this.filtrosVigencia.categoriasSeleccionadas =
+              this.filtrosVigencia.categoriasSeleccionadas.filter((cat) =>
+                this.categoriasDisponiblesVigencia.some(
+                  (dispo) => dispo.IDCategoriaDoc === cat.IDCategoriaDoc
+                )
+              );
+          } catch (error) {
+            console.error(
+              "No se pudo cargar la lista de subcategorías para Vigencia:",
+              error
+            );
+          }
+        } else {
+          this.categoriasDisponiblesVigencia = [];
+          this.filtrosVigencia.categoriasSeleccionadas = [];
+        }
+      },
+      deep: true,
     },
   },
   async mounted() {
