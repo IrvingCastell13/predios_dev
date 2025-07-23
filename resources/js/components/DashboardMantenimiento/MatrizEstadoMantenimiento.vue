@@ -1,138 +1,287 @@
 <template>
-    <div style="height: 600px; position: relative; overflow: auto;">
-        <canvas ref="canvasRef"></canvas>
-        <div v-if="isLoading" class="d-flex justify-content-center align-items-center h-100">
-            <span class="text-secondary">Cargando matriz...</span>
-        </div>
-        <div v-if="!isLoading && chartDataIsEmpty" class="d-flex justify-content-center align-items-center h-100">
-             <span class="text-secondary">No hay datos para la selección actual.</span>
-        </div>
+  <div class="chart-container" style="height: 450px; position: relative">
+    <!-- Mensaje de Carga -->
+    <div
+      v-if="isLoading"
+      class="loading-overlay"
+    >
+      <span>Cargando gráfica...</span>
     </div>
+
+    <!-- Mensaje de Datos Vacíos -->
+    <div
+      v-if="chartDataIsEmpty && !isLoading"
+      class="loading-overlay"
+    >
+      <span>No hay datos disponibles para los filtros seleccionados.</span>
+    </div>
+
+    <!-- Contenedor del Gráfico ECharts -->
+    <v-chart
+      v-if="!isLoading && !chartDataIsEmpty"
+      :option="option"
+      autoresize
+      class="chart"
+    />
+  </div>
 </template>
 
-<script>
-import { Chart as ChartJS, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
-import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
-import axios from 'axios';
+<script setup>
+import { ref, watch, onUnmounted } from "vue";
+import { use } from "echarts/core";
+import VChart from "vue-echarts";
+import axios from "axios";
 
-ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, MatrixController, MatrixElement);
+// Importaciones específicas para ECharts
+import { CanvasRenderer } from "echarts/renderers";
+import { HeatmapChart } from "echarts/charts";
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  VisualMapComponent,
+  DataZoomComponent,
+} from "echarts/components";
 
-export default {
-    name: 'MatrizEstadoMantenimiento',
-     props: {
-        apiUrl: { type: String, required: true },
-        idPredios: { type: Array, required: true },
-        idSistemas: { type: Array, required: true },    // <-- Cambiado a Array
-        idSubsistemas: { type: Array, required: true }, // <-- Cambiado a Array
-        fechaInicio: { type: String, default: null },
-        fechaFin: { type: String, default: null }
-    },
-    data() {
-        return {
-            chart: null,
-            isLoading: true,
-            chartDataIsEmpty: false
-        };
-    },
-    computed: {
-         filtros() {
-            return {
-                predios: this.idPredios,
-                sistemas: this.idSistemas,         // <-- Nombre de prop cambiado
-                subsistemas: this.idSubsistemas,   // <-- Nombre de prop cambiado
-                inicio: this.fechaInicio,
-                fin: this.fechaFin
-            };
-        }
-    },
-    watch: {
-        filtros: {
-            handler() { this.fetchData(); },
-            deep: true,
-            immediate: true
-        }
-    },
-    methods: {
-        async fetchData() {
-            this.isLoading = true;
-            this.chartDataIsEmpty = false;
-            if (this.chart) { this.chart.destroy(); }
+// Registro de los componentes de ECharts que se usarán
+use([
+  CanvasRenderer,
+  HeatmapChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  VisualMapComponent,
+  DataZoomComponent,
+]);
 
-            try {
-                const response = await axios.get(this.apiUrl, {
-                    params: {
-                        predio_ids: this.idPredios,
-                        sistema_ids: this.idSistemas,       // <-- Nombre de param cambiado
-                        subsistema_ids: this.idSubsistemas, // <-- Nombre de param cambiado
-                        fecha_inicio: this.fechaInicio,
-                        fecha_fin: this.fechaFin
-                    }
-                });
-                const data = response.data;
+// --- PROPS ---
+// Se definen las propiedades que el componente recibe, adaptadas para el dashboard de mantenimiento.
+const props = defineProps({
+  apiUrl: { type: String, required: true },
+  chartTitle: { type: String, default: "Matriz de Estado de Mantenimiento" },
+  idPredios: { type: Array, required: true },
+  idSistemas: { type: Array, required: true },
+  idSubsistemas: { type: Array, required: true },
+  fechaInicio: { type: String, default: null },
+  fechaFin: { type: String, default: null },
+});
 
-                if (data.length === 0) {
-                    this.chartDataIsEmpty = true;
-                    return;
-                }
-                
-                const allX = [...new Set(data.map(d => d.x))].sort();
-                const allY = [...new Set(data.map(d => d.y))].sort();
-                const colorMap = {
-                    'estado-01': '#facc15',
-                    'estado-02': '#60a5fa',
-                    'estado-03': '#4ade80',
-                };
-                const cellWidth = 150;
-                const cellHeight = 40;
-                const ctx = this.$refs.canvasRef.getContext('2d');
-                this.chart = new ChartJS(ctx, {
-                     type: 'matrix',
-                     data: {
-                        datasets: [{
-                            label: 'Estado de mantenimiento',
-                            data: data,
-                            backgroundColor: (ctx) => {
-                                const value = ctx.raw.v;
-                                if (value === null) return '#f87171';
-                                return colorMap[value] || '#64748b';
-                            },
-                            borderWidth: 1,
-                            borderColor: '#ffffff',
-                            width: () => cellWidth,
-                            height: () => cellHeight
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: { display: true, text: this.chartTitle },
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: (ctx) => {
-                                        const lines = [];
-                                        lines.push(`Estado: ${ctx.raw.estado}`);
-                                        lines.push(`Tiene OT: ${ctx.raw.tiene_ot === 1 ? 'Sí' : 'No'}`);
-                                        lines.push(`Fecha Inicio: ${ctx.raw.fecha_inicio || 'N/D'}`);
-                                        lines.push(`Fecha Fin: ${ctx.raw.fecha_fin || 'N/D'}`);
-                                        return lines;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: { type: 'category', labels: allX, ticks: { autoSkip: false } },
-                            y: { type: 'category', labels: allY, offset: true, reverse: true }
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error('Error al cargar la matriz de mantenimiento:', error);
-            } finally {
-                this.isLoading = false;
-            }
-        }
-    }
+// --- ESTADO REACTIVO ---
+const option = ref({});
+const isLoading = ref(true);
+const chartDataIsEmpty = ref(false);
+let cancelTokenSource = null;
+
+// --- LÓGICA DE LA GRÁFICA ---
+
+/**
+ * Mapea el ID del estado (ej. 'estado-01') a un valor numérico
+ * para que ECharts pueda procesarlo en el visualMap.
+ * @param {string | null} estadoId - El ID del estado proveniente de la API.
+ * @returns {number} - Un valor numérico representando el estado.
+ */
+const mapEstadoToValue = (estadoId) => {
+  if (estadoId === 'estado-03') return 3; // Ejecutado
+  if (estadoId === 'estado-02') return 2; // En Proceso
+  if (estadoId === 'estado-01') return 1; // Pendiente
+  return 0; // Sin Datos o Faltante
 };
+
+/**
+ * Realiza la petición a la API para obtener los datos de mantenimiento y construye la
+ * configuración de la gráfica ECharts.
+ */
+const fetchChartData = async () => {
+  isLoading.value = true;
+  chartDataIsEmpty.value = false;
+
+  if (cancelTokenSource) {
+    cancelTokenSource.cancel("Nueva solicitud iniciada, cancelando la anterior.");
+  }
+  cancelTokenSource = axios.CancelToken.source();
+
+  try {
+    const response = await axios.get(props.apiUrl, {
+      params: {
+        predio_ids: props.idPredios,
+        sistema_ids: props.idSistemas,
+        subsistema_ids: props.idSubsistemas,
+        fecha_inicio: props.fechaInicio,
+        fecha_fin: props.fechaFin,
+      },
+      cancelToken: cancelTokenSource.token,
+    });
+
+    const data = response.data;
+
+    if (!data || data.length === 0) {
+      chartDataIsEmpty.value = true;
+      option.value = {};
+      return;
+    }
+
+    const allX = [...new Set(data.map((d) => d.x))].sort();
+    const allY = [...new Set(data.map((d) => d.y))].sort();
+
+    const seriesData = data.map(d => ({
+        value: [
+            allX.indexOf(d.x),
+            allY.indexOf(d.y),
+            mapEstadoToValue(d.v)
+        ],
+        raw: d
+    }));
+    
+    const dataZoomConfig = [];
+    if (allX.length > 10) {
+        dataZoomConfig.push({
+            type: 'slider',
+            xAxisIndex: [0],
+            start: 0,
+            end: (10 / allX.length) * 100,
+            bottom: '2px',
+        });
+    }
+    if (allY.length > 15) {
+        dataZoomConfig.push({
+            type: 'slider',
+            yAxisIndex: [0],
+            start: 0,
+            end: (15 / allY.length) * 100,
+            right: '2px',
+        });
+    }
+
+    option.value = {
+      title: {
+        text: props.chartTitle,
+        left: 'center',
+        top: '2%',
+      },
+      tooltip: {
+        position: 'top',
+        formatter: (params) => {
+          const rawData = params.data.raw;
+          const xLabel = rawData.x;
+          const yLabel = rawData.y;
+          return `<b>${yLabel}</b><br/>` +
+                 `${xLabel}<br/>` +
+                 `Estado: <b>${rawData.estado || 'N/D'}</b><br/>` +
+                 `Tiene OT: ${rawData.tiene_ot === 1 ? 'Sí' : 'No'}<br/>` +
+                 `Fecha Inicio: ${rawData.fecha_inicio || 'N/D'}<br/>` +
+                 `Fecha Fin: ${rawData.fecha_fin || 'N/D'}`;
+        }
+      },
+      grid: {
+        left: '2%',
+        right: '8%',
+        bottom: '18%',
+        top: '10%',
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        data: allX,
+        splitArea: { show: true },
+        axisLabel: { rotate: 30, interval: 0 }
+      },
+      yAxis: {
+        type: 'category',
+        data: allY,
+        splitArea: { show: true },
+        axisLabel: { interval: 0 }
+      },
+      visualMap: {
+        type: 'piecewise',
+        orient: 'horizontal',
+        left: 'center',
+        bottom: '5%',
+        pieces: [
+            { value: 3, label: 'Ejecutado', color: '#4ade80' },
+            { value: 2, label: 'En Proceso', color: '#60a5fa' },
+            { value: 1, label: 'Pendiente', color: '#facc15' },
+            { value: 0, label: 'Sin Datos', color: '#f87171' }
+        ],
+        calculable: false,
+      },
+      dataZoom: dataZoomConfig,
+      series: [{
+        name: 'Estado de Mantenimiento',
+        type: 'heatmap',
+        data: seriesData,
+        itemStyle: {
+            borderColor: '#fff',
+            borderWidth: 2
+        },
+        label: { show: false },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }]
+    };
+
+  } catch (error) {
+    if (axios.isCancel(error)) {
+      console.log("Solicitud cancelada:", error.message);
+    } else {
+      console.error("Error al cargar datos de la matriz de mantenimiento:", error);
+      chartDataIsEmpty.value = true;
+      option.value = {};
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// --- WATCHERS ---
+// Observa los cambios en los filtros de mantenimiento.
+watch(
+  () => [
+    props.idPredios,
+    props.idSistemas,
+    props.idSubsistemas,
+    props.fechaInicio,
+    props.fechaFin,
+  ],
+  fetchChartData,
+  {
+    deep: true,
+    immediate: true,
+  }
+);
+
+// --- CICLO DE VIDA ---
+onUnmounted(() => {
+  if (cancelTokenSource) {
+    cancelTokenSource.cancel("Componente destruido.");
+  }
+});
 </script>
+
+<style scoped>
+.chart-container {
+  width: 100%;
+  height: 100%;
+}
+.chart {
+  width: 100%;
+  height: 100%;
+}
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+  color: #6c757d;
+  font-size: 1.2rem;
+}
+</style>
