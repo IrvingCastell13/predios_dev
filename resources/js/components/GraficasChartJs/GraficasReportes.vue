@@ -74,7 +74,7 @@
                       <label class="form-label fw-bold">Subcategoría:</label>
                       <vue-multiselect
                         v-model="filtrosCumplimiento.categoriasSeleccionadas"
-                        :options="categoriasDisponibles"
+                        :options="categoriasDisponiblesCumplimiento"
                         :multiple="true"
                         :close-on-select="false"
                         :disabled="
@@ -291,12 +291,10 @@
                 <label class="form-label fw-bold">Subcategoría:</label>
                 <vue-multiselect
                   v-model="filtrosVigencia.categoriasSeleccionadas"
-                  :options="categoriasDisponibles"
+                  :options="categoriasDisponiblesVigencia"
                   :multiple="true"
                   :close-on-select="false"
-                  :disabled="
-                    filtrosVigencia.gruposSeleccionados.length === 0
-                  "
+                  :disabled="filtrosVigencia.gruposSeleccionados.length === 0"
                   placeholder="Seleccione categoría"
                   label="NombreCategoriaDoc"
                   track-by="IDCategoriaDoc"
@@ -329,7 +327,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="card mb-5">
           <div class="card-header">
             Matriz de Estado de Documentos por Categoría
@@ -424,9 +422,13 @@ export default {
       // Datos para los dropdowns (comunes a ambos)
       prediosDisponibles: [],
       gruposDisponibles: [],
-      categoriasDisponibles: [],
       tiposDocumentoDisponibles: [],
       tiposInmuebleDisponibles: [],
+
+      // --- INICIA CORRECCIÓN: Listas de subcategorías separadas ---
+      categoriasDisponiblesCumplimiento: [],
+      categoriasDisponiblesVigencia: [],
+      // --- FIN CORRECCIÓN ---
 
       // Estado de los filtros para la pestaña CUMPLIMIENTO
       filtrosCumplimiento: {
@@ -447,6 +449,7 @@ export default {
       },
     };
   },
+
   computed: {
     // --- Computeds para Cumplimiento ---
     idPrediosSeleccionadosCumplimiento() {
@@ -498,8 +501,9 @@ export default {
       );
     },
   },
+
   watch: {
-    // Watcher para el filtro de grupos de CUMPLIMIENTO
+    // --- INICIA CORRECCIÓN: Watchers separados para cada filtro ---
     "filtrosCumplimiento.gruposSeleccionados": {
       async handler(newGrupos) {
         const newGrupoIds = newGrupos.map((g) => g.IDGrupoDoc);
@@ -517,7 +521,7 @@ export default {
               );
           } catch (error) {
             console.error(
-              "No se pudo cargar la lista de subcategorías para Cumplimiento:",
+              "Error al cargar subcategorías para Cumplimiento:",
               error
             );
           }
@@ -528,7 +532,6 @@ export default {
       },
       deep: true,
     },
-    // Watcher para el filtro de grupos de VIGENCIA
     "filtrosVigencia.gruposSeleccionados": {
       async handler(newGrupos) {
         const newGrupoIds = newGrupos.map((g) => g.IDGrupoDoc);
@@ -546,7 +549,7 @@ export default {
               );
           } catch (error) {
             console.error(
-              "No se pudo cargar la lista de subcategorías para Vigencia:",
+              "Error al cargar subcategorías para Vigencia:",
               error
             );
           }
@@ -557,7 +560,9 @@ export default {
       },
       deep: true,
     },
+    // --- FIN CORRECCIÓN ---
   },
+
   async mounted() {
     try {
       const [prediosRes, gruposRes, tiposDocRes, tiposInmuebleRes] =
