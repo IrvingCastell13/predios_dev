@@ -1,153 +1,296 @@
 <template>
-    <div style="height: 600px; position: relative; overflow: auto;">
-        <canvas ref="canvasRef"></canvas>
-        <div v-if="isLoading" class="d-flex justify-content-center align-items-center h-100">
-            <span class="text-secondary">Cargando matriz...</span>
-        </div>
-        <div v-if="!isLoading && chartDataIsEmpty" class="d-flex justify-content-center align-items-center h-100">
-             <span class="text-secondary">No hay datos para la selección actual.</span>
-        </div>
+  <div class="chart-container" style="height: 450px; position: relative">
+    <!-- Mensaje de Carga -->
+    <div
+      v-if="isLoading"
+      class="loading-overlay"
+    >
+      <span>Cargando gráfica...</span>
     </div>
+
+    <!-- Mensaje de Datos Vacíos -->
+    <div
+      v-if="chartDataIsEmpty && !isLoading"
+      class="loading-overlay"
+    >
+      <span>No hay datos disponibles para los filtros seleccionados.</span>
+    </div>
+
+    <!-- Contenedor del Gráfico -->
+    <v-chart
+      v-if="!isLoading && !chartDataIsEmpty"
+      :option="option"
+      autoresize
+      class="chart"
+    />
+  </div>
 </template>
 
-<script>
-import { Chart as ChartJS, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
-import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
-import axios from 'axios';
+<script setup>
+import { ref, watch, onUnmounted } from "vue";
+import { use } from "echarts/core";
+import VChart from "vue-echarts";
+import axios from "axios";
 
-ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, MatrixController, MatrixElement);
+// Importaciones específicas para ECharts (Heatmap)
+import { CanvasRenderer } from "echarts/renderers";
+import { HeatmapChart } from "echarts/charts";
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  VisualMapComponent,
+  DataZoomComponent,
+} from "echarts/components";
 
-export default {
-    name: 'VigenciaMatrizEstadoSubcategoria',
-    props: {
-        apiUrl: { type: String, required: true },
-        idPredios: { type: Array, required: true },
-        idGrupos: { type: Array, required: true },
-        idCategorias: { type: Array, required: true },
-        idTiposDocumento: { type: Array, required: true },
-        idTiposInmueble: { type: Array, required: true }
-    },
-    data() {
-        return {
-            chart: null,
-            isLoading: true,
-            chartDataIsEmpty: false,
-            cancelTokenSource: null
-        };
-    },
-    computed: {
-        filtros() {
-            return {
-                predios: this.idPredios,
-                grupos: this.idGrupos,
-                categorias: this.idCategorias,
-                tiposDocumento: this.idTiposDocumento,
-                tiposInmueble: this.idTiposInmueble,
-            };
-        }
-    },
-    watch: {
-        filtros: {
-            handler() { this.fetchData(); },
-            deep: true,
-            immediate: true
-        }
-    },
-    methods: {
-        async fetchData() {
-            this.isLoading = true;
-            this.chartDataIsEmpty = false;
-            if (this.chart) {
-                this.chart.destroy();
-            }
-            if (this.cancelTokenSource) {
-                this.cancelTokenSource.cancel('Nueva solicitud iniciada.');
-            }
-            this.cancelTokenSource = axios.CancelToken.source();
+// Registro de los componentes de ECharts que se usarán
+use([
+  CanvasRenderer,
+  HeatmapChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  VisualMapComponent,
+  DataZoomComponent,
+]);
 
-            try {
-                const response = await axios.get(this.apiUrl, {
-                    params: {
-                        predio_ids: this.idPredios,
-                        grupo_ids: this.idGrupos,
-                        categoria_ids: this.idCategorias,
-                        tipo_doc_ids: this.idTiposDocumento,
-                        tipo_inmueble_ids: this.idTiposInmueble,
-                    },
-                    cancelToken: this.cancelTokenSource.token
-                });
-                
-                this.renderMatrix(response.data);
+// --- PROPS ---
+const props = defineProps({
+  apiUrl: { type: String, required: true },
+  chartTitle: { type: String, required: true },
+  idPredios: { type: Array, required: true },
+  idGrupos: { type: Array, required: true },
+  idCategorias: { type: Array, required: true },
+  idTiposDocumento: { type: Array, required: true },
+  idTiposInmueble: { type: Array, required: true },
+});
 
-            } catch (error) {
-                if (axios.isCancel(error)) {
-                    console.log('Solicitud cancelada:', error.message);
-                } else {
-                    this.chartDataIsEmpty = true;
-                    console.error('Error al cargar datos para la matriz de vigencia por subcategoría:', error);
-                }
-            } finally {
-                this.isLoading = false;
-            }
-        },
-        renderMatrix(data) {
-            if (!data || data.length === 0) {
-                this.chartDataIsEmpty = true;
-                return;
-            }
+// --- ESTADO REACTIVO ---
+const option = ref({});
+const isLoading = ref(true);
+const chartDataIsEmpty = ref(false);
+let cancelTokenSource = null;
 
-            const allX = [...new Set(data.map(d => d.x))].sort();
-            const allY = [...new Set(data.map(d => d.y))].sort();
+// --- LÓGICA DE LA GRÁFICA ---
+const fetchChartData = async () => {
+  isLoading.value = true;
+  chartDataIsEmpty.value = false;
 
-            const colorMap = {
-                'estado-03': '#4ade80',  // Ejecutado
-                'estado-02': '#60a5fa',  // En Proceso
-                'estado-01': '#facc15',  // Pendiente
-                 null: '#f87171'         // Faltante (cuando el estado_id es null)
-            };
+  if (cancelTokenSource) {
+    cancelTokenSource.cancel("Nueva solicitud iniciada, cancelando la anterior.");
+  }
+  cancelTokenSource = axios.CancelToken.source();
 
-            const cellWidth = 120;
-            const cellHeight = 40;
-            const ctx = this.$refs.canvasRef.getContext('2d');
-            
-            this.chart = new ChartJS(ctx, {
-                type: 'matrix',
-                data: {
-                    datasets: [{
-                        label: 'Estado',
-                        data: data,
-                        backgroundColor: (ctx) => {
-                            const value = ctx.raw.v;
-                            return colorMap[value] || '#e5e7eb';
-                        },
-                        borderWidth: 2,
-                        borderColor: '#ffffff',
-                        width: () => cellWidth,
-                        height: () => cellHeight
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => `Estado: ${ctx.raw.estado}`
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Matriz de Estado de Documentos por Subcategoría'
-                        }
-                    },
-                    scales: {
-                        x: { type: 'category', labels: allX, ticks: { autoSkip: false, font: { size: 10 } } },
-                        y: { type: 'category', labels: allY, offset: true, reverse: true }
-                    }
-                }
-            });
-        }
+  try {
+    const response = await axios.get(props.apiUrl, {
+      params: {
+        predio_ids: props.idPredios,
+        grupo_ids: props.idGrupos,
+        categoria_ids: props.idCategorias,
+        tipo_doc_ids: props.idTiposDocumento,
+        tipo_inmueble_ids: props.idTiposInmueble,
+      },
+      cancelToken: cancelTokenSource.token,
+    });
+
+    const data = response.data;
+
+    if (!data || data.length === 0) {
+      chartDataIsEmpty.value = true;
+      option.value = {};
+      return;
     }
+
+    const allX = [...new Set(data.map((d) => d.x))].sort();
+    const allY = [...new Set(data.map((d) => d.y))].sort();
+
+    // Mapeo de estados a valores numéricos para el visualMap
+    const stateValueMap = {
+        'estado-03': 3,  // Ejecutado
+        'estado-02': 2,  // En Proceso
+        'estado-01': 1,  // Pendiente
+         null: 0         // Faltante
+    };
+
+    // Adaptar los datos para ECharts, incluyendo el objeto original para el tooltip
+    const seriesData = data.map(d => ({
+        value: [
+            allX.indexOf(d.x),
+            allY.indexOf(d.y),
+            stateValueMap[d.v] ?? 0 // Usar el valor numérico mapeado
+        ],
+        // Guardar el estado original para usarlo en el tooltip
+        originalState: d.estado 
+    }));
+    
+    const dataZoomConfig = [];
+    const xItemThreshold = 3;
+    const yItemThreshold = 6;
+
+    const sliderStyle = {
+        type: 'slider',
+        showDetail: false,
+        showDataShadow: false,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        fillerColor: 'rgba(0,0,0,0.2)',
+        borderColor: 'transparent',
+    };
+
+    if (allX.length > xItemThreshold) {
+        dataZoomConfig.push({
+          ...sliderStyle,
+          xAxisIndex: [0],
+          start: 0,
+          end: (xItemThreshold / allX.length) * 100,
+          height: 12,
+          bottom: '2px',
+        });
+    }
+    
+    if (allY.length > yItemThreshold) {
+        dataZoomConfig.push({
+          ...sliderStyle,
+          yAxisIndex: [0],
+          start: 0,
+          end: (yItemThreshold / allY.length) * 100,
+          width: 12,
+          right: '2px', 
+        });
+    }
+
+    option.value = {
+      title: {
+        text: props.chartTitle,
+        left: 'center',
+        top: '2%',
+      },
+      tooltip: {
+        position: 'top',
+        formatter: (params) => {
+            const xLabel = allX[params.data.value[0]];
+            const yLabel = allY[params.data.value[1]];
+            const status = params.data.originalState || 'Faltante';
+            return `<b>${yLabel}</b><br/>${xLabel}<br/>Estado: ${status}`;
+        }
+      },
+      grid: {
+        left: '2%',
+        right: '8%',
+        bottom: '22%',
+        top: '10%',
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        data: allX,
+        splitArea: { show: true },
+        position: 'top',
+        axisLabel: {
+            rotate: 30,
+            interval: 0,
+        }
+      },
+      yAxis: {
+        type: 'category',
+        data: allY,
+        splitArea: { show: true },
+        axisLabel: {
+            interval: 0,
+            overflow: 'break',
+        }
+      },
+      visualMap: {
+        type: 'piecewise',
+        orient: 'horizontal',
+        left: 'center',
+        bottom: '10%',
+        pieces: [
+            { value: 3, label: 'Ejecutado', color: '#4ade80' },
+            { value: 2, label: 'En Proceso', color: '#60a5fa' },
+            { value: 1, label: 'Pendiente', color: '#facc15' },
+            { value: 0, label: 'Faltante', color: '#f87171' }
+        ],
+        calculable: false,
+      },
+      dataZoom: dataZoomConfig,
+      series: [{
+        name: 'Estado del Documento',
+        type: 'heatmap',
+        data: seriesData,
+        itemStyle: {
+            borderColor: '#fff',
+            borderWidth: 2
+        },
+        label: {
+          show: false,
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }]
+    };
+
+  } catch (error) {
+    if (axios.isCancel(error)) {
+      console.log("Solicitud cancelada:", error.message);
+    } else {
+      console.error("Error al cargar datos de heatmap:", error);
+      chartDataIsEmpty.value = true;
+      option.value = {};
+    }
+  } finally {
+    isLoading.value = false;
+  }
 };
+
+// --- WATCHERS ---
+watch(
+  () => [
+    props.idPredios,
+    props.idGrupos,
+    props.idCategorias,
+    props.idTiposDocumento,
+    props.idTiposInmueble,
+  ],
+  fetchChartData,
+  {
+    deep: true,
+    immediate: true,
+  }
+);
+
+// --- CICLO DE VIDA ---
+onUnmounted(() => {
+  if (cancelTokenSource) {
+    cancelTokenSource.cancel("Componente destruido.");
+  }
+});
 </script>
+
+<style scoped>
+.chart-container {
+  width: 100%;
+  height: 100%;
+}
+.chart {
+  width: 100%;
+  height: 100%;
+}
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+  color: #6c757d; /* text-secondary de Bootstrap */
+  font-size: 1.2rem;
+}
+</style>

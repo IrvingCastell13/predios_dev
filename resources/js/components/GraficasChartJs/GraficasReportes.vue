@@ -328,35 +328,40 @@
           </div>
         </div>
 
-        <div class="card mb-5">
-          <div class="card-header">
-            Matriz de Estado de Documentos por Categoría
+        <div class="row">
+          <div class="col-lg-6 mb-4">
+            <div class="card mb-5 h-100">
+              <div class="card-header">
+                Matriz de Estado de Documentos por Categoría
+              </div>
+              <div class="card-body">
+                <VigenciaMatrizEstadoCategoria
+                  :id-predios="idPrediosSeleccionadosVigencia"
+                  :id-grupos="idGruposSeleccionadosVigencia"
+                  :id-categorias="idCategoriasSeleccionadasVigencia"
+                  :id-tipos-documento="idTiposDocumentoSeleccionadosVigencia"
+                  :id-tipos-inmueble="idTiposInmuebleSeleccionadosVigencia"
+                  api-url="/api/bi/documentos-con-estado"
+                />
+              </div>
+            </div>
           </div>
-          <div class="card-body">
-            <VigenciaMatrizEstadoCategoria
-              :id-predios="idPrediosSeleccionadosVigencia"
-              :id-grupos="idGruposSeleccionadosVigencia"
-              :id-categorias="idCategoriasSeleccionadasVigencia"
-              :id-tipos-documento="idTiposDocumentoSeleccionadosVigencia"
-              :id-tipos-inmueble="idTiposInmuebleSeleccionadosVigencia"
-              api-url="/api/bi/documentos-con-estado"
-            />
-          </div>
-        </div>
-
-        <div class="card mb-4">
-          <div class="card-header">
-            Matriz de Estado de Documentos por Subcategoría
-          </div>
-          <div class="card-body">
-            <VigenciaMatrizEstadoSubcategoria
-              :id-predios="idPrediosSeleccionadosVigencia"
-              :id-grupos="idGruposSeleccionadosVigencia"
-              :id-categorias="idCategoriasSeleccionadasVigencia"
-              :id-tipos-documento="idTiposDocumentoSeleccionadosVigencia"
-              :id-tipos-inmueble="idTiposInmuebleSeleccionadosVigencia"
-              api-url="/api/bi/documentos-por-subcategoria"
-            />
+          <div class="col-lg-6 mb-4">
+            <div class="card mb-4 h-100">
+              <div class="card-header">
+                Matriz de Estado de Documentos por Subcategoría
+              </div>
+              <div class="card-body">
+                <VigenciaMatrizEstadoSubcategoria
+                  :id-predios="idPrediosSeleccionadosVigencia"
+                  :id-grupos="idGruposSeleccionadosVigencia"
+                  :id-categorias="idCategoriasSeleccionadasVigencia"
+                  :id-tipos-documento="idTiposDocumentoSeleccionadosVigencia"
+                  :id-tipos-inmueble="idTiposInmuebleSeleccionadosVigencia"
+                  api-url="/api/bi/documentos-por-subcategoria"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
