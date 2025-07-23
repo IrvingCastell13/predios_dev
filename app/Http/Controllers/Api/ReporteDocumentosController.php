@@ -655,4 +655,40 @@ class ReporteDocumentosController extends Controller
 
         return response()->json($data);
     }
+
+    public function tablaDetalladaVigencia(Request $request)
+    {
+        // La base de la consulta es la misma que las anteriores de Vigencia
+        $query = DB::table('conf_predios as p')
+            ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
+            ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
+            ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
+            ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
+            ->leftJoin('gd_documentos as d', function ($join) {
+                $join->on('d.IDPredio', '=', 'p.IDPredio')
+                     ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
+            })
+            ->leftJoin('track_instancias as ti', 'ti.IDInstancia', 'd.IDDocumento')
+            ->leftJoin('track_estados as s', 's.IDEstado', '=', 'ti.IDEstadoActualInstancia');
+
+        // Reutilizamos la función de filtros comunes
+        $query = $this->aplicarFiltrosComunes($query, $request);
+
+        $resultados = $query->select(
+                'p.NombrePredio as predio',
+                'g.NombreGrupoDoc as categoria',
+                'cat.NombreCategoriaDoc as subcategoria',
+                'td.NombreTipoDocumento as tipo_documento',
+                DB::raw("CASE WHEN d.IDDocumento IS NOT NULL THEN 'CREADO' ELSE 'FALTANTE' END as estado_documento"),
+                's.NombreEstado as estado_accion'
+            )
+            ->orderBy('p.NombrePredio')
+            ->orderBy('g.NombreGrupoDoc')
+            ->orderBy('cat.NombreCategoriaDoc')
+            ->orderBy('td.NombreTipoDocumento')
+            ->get();
+
+        // Para la tabla, no necesitamos mapear el resultado, lo enviamos tal cual.
+        return response()->json($resultados);
+    }
 }

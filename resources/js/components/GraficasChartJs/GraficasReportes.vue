@@ -239,7 +239,6 @@
 
       <div v-if="activeTab === 'Vigencia'">
         <div class="card mb-5">
-          
           <div class="card-header">
             Matriz de Estado de Documentos por Categoría
           </div>
@@ -255,7 +254,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card mb-4">
           <div class="card-header">
             Matriz de Estado de Documentos por Subcategoría
           </div>
@@ -267,6 +266,20 @@
               :id-tipos-documento="idTiposDocumentoSeleccionados"
               :id-tipos-inmueble="idTiposInmuebleSeleccionados"
               api-url="/api/bi/documentos-por-subcategoria"
+            />
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Tabla Detallada de Documentos</div>
+          <div class="card-body">
+            <VigenciaTablaDetallada
+              :id-predios="idPrediosSeleccionados"
+              :id-grupos="idGruposSeleccionados"
+              :id-categorias="idCategoriasSeleccionadas"
+              :id-tipos-documento="idTiposDocumentoSeleccionados"
+              :id-tipos-inmueble="idTiposInmuebleSeleccionados"
+              api-url="/api/bi/tabla-detallada-vigencia"
             />
           </div>
         </div>
@@ -296,8 +309,8 @@ import HorizontalPonderadoPorPredio from "./HorizontalPonderadoPorPredio.vue";
 import MatrizPorGrupo from "./MatrizPorGrupo.vue";
 import MatrizArchivosPorGrupo from "./MatrizArchivosPorGrupo.vue";
 import VigenciaMatrizEstadoCategoria from "./VigenciaMatrizEstadoCategoria.vue";
-import VigenciaMatrizEstadoSubcategoria from './VigenciaMatrizEstadoSubcategoria.vue'; 
-
+import VigenciaMatrizEstadoSubcategoria from "./VigenciaMatrizEstadoSubcategoria.vue";
+import VigenciaTablaDetallada from "./VigenciaTablaDetallada.vue";
 
 export default {
   components: {
@@ -309,7 +322,8 @@ export default {
     MatrizPorGrupo,
     MatrizArchivosPorGrupo,
     VigenciaMatrizEstadoCategoria,
-     VigenciaMatrizEstadoSubcategoria,
+    VigenciaMatrizEstadoSubcategoria,
+    VigenciaTablaDetallada,
   },
   data() {
     return {
