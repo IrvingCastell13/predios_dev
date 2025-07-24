@@ -694,51 +694,69 @@ class ReporteDocumentosController extends Controller
 
     public function porcentajeVigenciaPorPredio(Request $request)
     {
-        // La consulta base que calcula los totales
-        $data = DB::table('conf_predios as p')
+        // 1. Iniciar la construcción de la consulta (Query Builder)
+        $query = DB::table('conf_predios as p')
             ->join('gd_obligatorios_tipo_inmueble as oti', 'p.IDTipoPredio', '=', 'oti.IDTipoInmueble')
+            ->join('gd_tipos_documento as td', 'oti.IDTipoDocumento', '=', 'td.IDTipoDocumento') // Necesario para filtrar por grupo/categoría
+            ->join('gd_categorias_doc as cd', 'td.IDCategoriaDocumento', '=', 'cd.IDCategoriaDoc') // Necesario para filtrar por grupo
             ->leftJoin('gd_documentos as d', function ($join) {
                 $join->on('p.IDPredio', '=', 'd.IDPredio')
                     ->on('oti.IDTipoDocumento', '=', 'd.IDTipoDocumento');
             })
             ->leftJoin('track_instancias as ti', 'd.IDDocumento', '=', 'ti.IDInstancia')
-            ->leftJoin('track_estados as te', 'ti.IDEstadoActualInstancia', '=', 'te.IDEstado')
-            ->select(
-                'p.NombrePredio',
-                // El universo para el cálculo ahora es el total de documentos CREADOS
-                DB::raw('COUNT(d.IDDocumento) AS TotalCreados'),
-                DB::raw("SUM(CASE WHEN te.ClaveEstado = 'VENC' THEN 1 ELSE 0 END) AS TotalVencidos"),
-                DB::raw("SUM(CASE WHEN d.IDDocumento IS NOT NULL AND (te.ClaveEstado IS NULL OR te.ClaveEstado <> 'VENC') THEN 1 ELSE 0 END) AS TotalVigentes")
-            )
+            ->leftJoin('track_estados as te', 'ti.IDEstadoActualInstancia', '=', 'te.IDEstado');
+
+        // 2. Aplicar filtros dinámicamente ANTES de ejecutar la consulta
+        $query->when($request->filled('id_predios'), function ($q) use ($request) {
+            return $q->whereIn('p.IDPredio', $request->id_predios);
+        });
+
+        $query->when($request->filled('id_grupos_doc'), function ($q) use ($request) {
+            return $q->whereIn('cd.IDGrupoDoc', $request->id_grupos_doc);
+        });
+
+        $query->when($request->filled('id_categorias_doc'), function ($q) use ($request) {
+            return $q->whereIn('cd.IDCategoriaDoc', $request->id_categorias_doc);
+        });
+
+        $query->when($request->filled('id_tipos_documento'), function ($q) use ($request) {
+            return $q->whereIn('td.IDTipoDocumento', $request->id_tipos_documento);
+        });
+
+        $query->when($request->filled('id_tipos_inmueble'), function ($q) use ($request) {
+            return $q->whereIn('p.IDTipoPredio', $request->id_tipos_inmueble);
+        });
+
+        // 3. Seleccionar, agrupar y obtener los resultados
+        $data = $query->select(
+            'p.NombrePredio',
+            DB::raw('COUNT(DISTINCT oti.IDTipoDocumento) AS TotalObligatorios'), // Usamos DISTINCT para evitar duplicados por joins
+            DB::raw('COUNT(d.IDDocumento) AS TotalCreados'),
+            DB::raw("SUM(CASE WHEN te.ClaveEstado = 'VENC' THEN 1 ELSE 0 END) AS TotalVencidos"),
+            DB::raw("SUM(CASE WHEN d.IDDocumento IS NOT NULL AND (te.ClaveEstado IS NULL OR te.ClaveEstado <> 'VENC') THEN 1 ELSE 0 END) AS TotalVigentes")
+        )
             ->groupBy('p.NombrePredio')
-            // Solo incluimos predios que tengan al menos un documento creado
             ->having('TotalCreados', '>', 0)
             ->orderBy('p.NombrePredio')
             ->get();
 
-        // Formateamos la data para que sea fácil de consumir por Chart.js
+        // 4. Formatear la respuesta
         $labels = $data->pluck('NombrePredio');
 
         $datasets = [
             [
                 'label' => 'Vigentes',
-                'backgroundColor' => '#4ade80', // Color Verde
+                'backgroundColor' => '#4ade80',
                 'data' => $data->map(function ($item) {
-                    // El denominador ahora es TotalCreados
-                    if ($item->TotalCreados == 0) {
-                        return 0;
-                    }
+                    if ($item->TotalCreados == 0) return 0;
                     return round(($item->TotalVigentes / $item->TotalCreados) * 100, 2);
                 })
             ],
             [
                 'label' => 'Vencidos',
-                'backgroundColor' => '#f87171', // Color Rojo
+                'backgroundColor' => '#f87171',
                 'data' => $data->map(function ($item) {
-                    // El denominador ahora es TotalCreados
-                    if ($item->TotalCreados == 0) {
-                        return 0;
-                    }
+                    if ($item->TotalCreados == 0) return 0;
                     return round(($item->TotalVencidos / $item->TotalCreados) * 100, 2);
                 })
             ]

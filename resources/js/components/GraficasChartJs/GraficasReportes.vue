@@ -378,6 +378,28 @@
             />
           </div>
         </div>
+
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                Resumen de Vigencia General por Predio
+              </div>
+              <div class="card-body">
+                <horizontal-vigencia-por-predio
+                  :id-predios="idPrediosSeleccionadosVigencia"
+                  :id-grupos="idGruposSeleccionadosVigencia"
+                  :id-categorias="idCategoriasSeleccionadasVigencia"
+                  :id-tipos-documento="idTiposDocumentoSeleccionadosVigencia"
+                  :id-tipos-inmueble="idTiposInmuebleSeleccionadosVigencia"
+                  api-url="/api/bi/porcentaje-vigencia-por-predio"
+                  chart-title="Vencimiento de documentos ponderado por predio (%)"
+                >
+                </horizontal-vigencia-por-predio>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-if="activeTab === 'Proximamente'">
@@ -406,6 +428,7 @@ import MatrizArchivosPorGrupo from "./MatrizArchivosPorGrupo.vue";
 import VigenciaMatrizEstadoCategoria from "./VigenciaMatrizEstadoCategoria.vue";
 import VigenciaMatrizEstadoSubcategoria from "./VigenciaMatrizEstadoSubcategoria.vue";
 import VigenciaTablaDetallada from "./VigenciaTablaDetallada.vue";
+import HorizontalVigenciaPorPredio from "./HorizontalVigenciaPorPredio.vue";
 
 export default {
   components: {
@@ -419,6 +442,7 @@ export default {
     VigenciaMatrizEstadoCategoria,
     VigenciaMatrizEstadoSubcategoria,
     VigenciaTablaDetallada,
+    HorizontalVigenciaPorPredio,
   },
   data() {
     return {
