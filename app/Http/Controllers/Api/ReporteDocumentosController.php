@@ -666,7 +666,7 @@ class ReporteDocumentosController extends Controller
             ->join('gd_grupos_doc as g', 'g.IDGrupoDoc', '=', 'cat.IDGrupoDoc')
             ->leftJoin('gd_documentos as d', function ($join) {
                 $join->on('d.IDPredio', '=', 'p.IDPredio')
-                     ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
+                    ->on('d.IDTipoDocumento', '=', 'td.IDTipoDocumento');
             })
             ->leftJoin('track_instancias as ti', 'ti.IDInstancia', 'd.IDDocumento')
             ->leftJoin('track_estados as s', 's.IDEstado', '=', 'ti.IDEstadoActualInstancia');
@@ -675,13 +675,13 @@ class ReporteDocumentosController extends Controller
         $query = $this->aplicarFiltrosComunes($query, $request);
 
         $resultados = $query->select(
-                'p.NombrePredio as predio',
-                'g.NombreGrupoDoc as categoria',
-                'cat.NombreCategoriaDoc as subcategoria',
-                'td.NombreTipoDocumento as tipo_documento',
-                DB::raw("CASE WHEN d.IDDocumento IS NOT NULL THEN 'CREADO' ELSE 'FALTANTE' END as estado_documento"),
-                's.NombreEstado as estado_accion'
-            )
+            'p.NombrePredio as predio',
+            'g.NombreGrupoDoc as categoria',
+            'cat.NombreCategoriaDoc as subcategoria',
+            'td.NombreTipoDocumento as tipo_documento',
+            DB::raw("CASE WHEN d.IDDocumento IS NOT NULL THEN 'CREADO' ELSE 'FALTANTE' END as estado_documento"),
+            's.NombreEstado as estado_accion'
+        )
             ->orderBy('p.NombrePredio')
             ->orderBy('g.NombreGrupoDoc')
             ->orderBy('cat.NombreCategoriaDoc')
@@ -690,5 +690,63 @@ class ReporteDocumentosController extends Controller
 
         // Para la tabla, no necesitamos mapear el resultado, lo enviamos tal cual.
         return response()->json($resultados);
+    }
+
+    public function porcentajeVigenciaPorPredio(Request $request)
+    {
+        // La consulta base que calcula los totales
+        $data = DB::table('conf_predios as p')
+            ->join('gd_obligatorios_tipo_inmueble as oti', 'p.IDTipoPredio', '=', 'oti.IDTipoInmueble')
+            ->leftJoin('gd_documentos as d', function ($join) {
+                $join->on('p.IDPredio', '=', 'd.IDPredio')
+                    ->on('oti.IDTipoDocumento', '=', 'd.IDTipoDocumento');
+            })
+            ->leftJoin('track_instancias as ti', 'd.IDDocumento', '=', 'ti.IDInstancia')
+            ->leftJoin('track_estados as te', 'ti.IDEstadoActualInstancia', '=', 'te.IDEstado')
+            ->select(
+                'p.NombrePredio',
+                // El universo para el cálculo ahora es el total de documentos CREADOS
+                DB::raw('COUNT(d.IDDocumento) AS TotalCreados'),
+                DB::raw("SUM(CASE WHEN te.ClaveEstado = 'VENC' THEN 1 ELSE 0 END) AS TotalVencidos"),
+                DB::raw("SUM(CASE WHEN d.IDDocumento IS NOT NULL AND (te.ClaveEstado IS NULL OR te.ClaveEstado <> 'VENC') THEN 1 ELSE 0 END) AS TotalVigentes")
+            )
+            ->groupBy('p.NombrePredio')
+            // Solo incluimos predios que tengan al menos un documento creado
+            ->having('TotalCreados', '>', 0)
+            ->orderBy('p.NombrePredio')
+            ->get();
+
+        // Formateamos la data para que sea fácil de consumir por Chart.js
+        $labels = $data->pluck('NombrePredio');
+
+        $datasets = [
+            [
+                'label' => 'Vigentes',
+                'backgroundColor' => '#4ade80', // Color Verde
+                'data' => $data->map(function ($item) {
+                    // El denominador ahora es TotalCreados
+                    if ($item->TotalCreados == 0) {
+                        return 0;
+                    }
+                    return round(($item->TotalVigentes / $item->TotalCreados) * 100, 2);
+                })
+            ],
+            [
+                'label' => 'Vencidos',
+                'backgroundColor' => '#f87171', // Color Rojo
+                'data' => $data->map(function ($item) {
+                    // El denominador ahora es TotalCreados
+                    if ($item->TotalCreados == 0) {
+                        return 0;
+                    }
+                    return round(($item->TotalVencidos / $item->TotalCreados) * 100, 2);
+                })
+            ]
+        ];
+
+        return response()->json([
+            'labels' => $labels,
+            'datasets' => $datasets
+        ]);
     }
 }
