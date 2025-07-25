@@ -43,8 +43,8 @@ export default {
     props: {
         apiUrl: { type: String, required: true },
         idPredios: { type: Array, required: true },
-        idGrupos: { type: Array, required: true },       // <-- Cambiado a Array
-        idCategorias: { type: Array, required: true },   // <-- Cambiado a Array
+        idGrupos: { type: Array, required: true },       
+        idCategorias: { type: Array, required: true },  
         fechaInicio: { type: String, default: null },
         fechaFin: { type: String, default: null }
     },
@@ -55,8 +55,8 @@ export default {
         filtros() {
             return {
                 predios: this.idPredios,
-                grupos: this.idGrupos,           // <-- Nombre de prop cambiado
-                categorias: this.idCategorias,   // <-- Nombre de prop cambiado
+                grupos: this.idGrupos,         
+                categorias: this.idCategorias,   
                 inicio: this.fechaInicio,
                 fin: this.fechaFin
             };
@@ -83,8 +83,8 @@ export default {
                 const response = await axios.get(this.apiUrl, {
                     params: {
                         predio_ids: this.idPredios,
-                        grupo_ids: this.idGrupos,         // <-- Nombre de param cambiado
-                        categoria_ids: this.idCategorias, // <-- Nombre de param cambiado
+                        grupo_ids: this.idGrupos,         
+                        categoria_ids: this.idCategorias,
                         fecha_inicio: this.fechaInicio,
                         fecha_fin: this.fechaFin
                     }

@@ -3,19 +3,17 @@ import { createApp } from 'vue';
 
 
 // Importa tu componente contenedor que tiene las dos gráficas
-import GraficasReportes from './components/GraficasChartJs/GraficasReportes.vue';
-import DashboardRenovacion from './components/DashboardRenovacion/DashboardRenovacion.vue'; // <-- Ruta cambiada
-import DashboardMantenimiento from './components/DashboardMantenimiento/DashboardMantenimiento.vue';
-import { createPinia } from 'pinia'; // Importar Pinia
-import EquiposIndex from './components/Equipos/Index.vue';
+import DashboardReportes from './components/DashboardReportes/Dashboard.vue';
+import DashboardRenovacion from './components/DashboardRenovacion/Dashboard.vue'; // <-- Ruta cambiada
+import DashboardMantenimiento from './components/DashboardMantenimiento/Dashboard.vue';
+import DashboardOrdenTrabajo from './components/DashboardOrdenTrabajo/Dashboard.vue';
 
-const reportesAppDiv = document.getElementById('app');
-if (reportesAppDiv) {
-    const pinia = createPinia(); // <-- Se crea una instancia de Pinia
-    const app = createApp(GraficasReportes);
-    app.use(pinia); // <-- Se le dice a esta app que use Pinia
-    app.mount(reportesAppDiv);
+const reportesApp = document.getElementById('app-reportes'); // <-- ID cambiado
+
+if (reportesApp) {
+    createApp(DashboardReportes).mount(reportesApp); // <-- Componente cambiado
 }
+
 
 const renovacionApp = document.getElementById('app-renovacion'); // <-- ID cambiado
 
@@ -30,11 +28,9 @@ if (mantenimientoApp) {
     createApp(DashboardMantenimiento).mount(mantenimientoApp);
 }
 
-const equiposAppDiv = document.getElementById('app-equipos');
 
-if (equiposAppDiv) {
-    const pinia = createPinia(); // Crear una instancia de Pinia
-    const app = createApp(EquiposIndex); // Usar EquiposIndex como componente raíz
-    app.use(pinia); // Usar Pinia en la aplicación
-    app.mount(equiposAppDiv);
+const ordenTrabajo = document.getElementById('app-orden-trabajo');
+
+if (ordenTrabajo) {
+    createApp(DashboardOrdenTrabajo).mount(ordenTrabajo);
 }

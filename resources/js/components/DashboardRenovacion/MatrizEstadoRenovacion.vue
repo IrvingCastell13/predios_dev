@@ -1,6 +1,5 @@
 <template>
   <div class="chart-container" style="height: 450px; position: relative">
-    <!-- Mensaje de Carga -->
     <div
       v-if="isLoading"
       class="loading-overlay"
@@ -8,7 +7,6 @@
       <span>Cargando gráfica...</span>
     </div>
 
-    <!-- Mensaje de Datos Vacíos -->
     <div
       v-if="chartDataIsEmpty && !isLoading"
       class="loading-overlay"
@@ -16,7 +14,6 @@
       <span>No hay datos disponibles para los filtros seleccionados.</span>
     </div>
 
-    <!-- Contenedor del Gráfico ECharts -->
     <v-chart
       v-if="!isLoading && !chartDataIsEmpty"
       :option="option"
@@ -31,8 +28,6 @@ import { ref, watch, onUnmounted } from "vue";
 import { use } from "echarts/core";
 import VChart from "vue-echarts";
 import axios from "axios";
-
-// Importaciones específicas para ECharts
 import { CanvasRenderer } from "echarts/renderers";
 import { HeatmapChart } from "echarts/charts";
 import {
@@ -43,7 +38,6 @@ import {
   DataZoomComponent,
 } from "echarts/components";
 
-// Registro de los componentes de ECharts que se usarán
 use([
   CanvasRenderer,
   HeatmapChart,
@@ -55,7 +49,6 @@ use([
 ]);
 
 // --- PROPS ---
-// Se definen las propiedades que el componente recibe desde el padre.
 const props = defineProps({
   apiUrl: { type: String, required: true },
   chartTitle: { type: String, default: "Matriz de Estado de Renovación" },
@@ -67,22 +60,12 @@ const props = defineProps({
 });
 
 // --- ESTADO REACTIVO ---
-// 'option' contiene la configuración completa de la gráfica de ECharts.
 const option = ref({});
-// Banderas para controlar la visualización de los mensajes de carga y datos vacíos.
 const isLoading = ref(true);
 const chartDataIsEmpty = ref(false);
-// Variable para gestionar la cancelación de peticiones Axios.
 let cancelTokenSource = null;
 
 // --- LÓGICA DE LA GRÁFICA ---
-
-/**
- * Mapea el ID del estado (ej. 'estado-01') a un valor numérico
- * para que ECharts pueda procesarlo en el visualMap.
- * @param {string | null} estadoId - El ID del estado proveniente de la API.
- * @returns {number} - Un valor numérico representando el estado.
- */
 const mapEstadoToValue = (estadoId) => {
   if (estadoId === 'estado-03') return 3; // Ejecutado
   if (estadoId === 'estado-02') return 2; // En Proceso
@@ -90,10 +73,6 @@ const mapEstadoToValue = (estadoId) => {
   return 0; // Sin Datos o Faltante
 };
 
-/**
- * Realiza la petición a la API para obtener los datos y construye la
- * configuración de la gráfica ECharts.
- */
 const fetchChartData = async () => {
   isLoading.value = true;
   chartDataIsEmpty.value = false;
@@ -140,7 +119,6 @@ const fetchChartData = async () => {
         raw: d // Guardamos el objeto original para el tooltip
     }));
     
-    // Configuración dinámica del DataZoom para mejorar la visibilidad con muchos datos.
     const dataZoomConfig = [];
     if (allX.length > 10) {
         dataZoomConfig.push({

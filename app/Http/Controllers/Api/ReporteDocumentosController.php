@@ -9,6 +9,10 @@ use App\Http\Requests\ReportePorPrediosRequest;
 
 class ReporteDocumentosController extends Controller
 {
+
+    /**
+     * Devuelve una lista de Predios.
+     */
     public function listarPredios()
     {
         $predios = DB::table('conf_predios')
@@ -19,7 +23,9 @@ class ReporteDocumentosController extends Controller
         return response()->json($predios);
     }
 
-
+    /**
+     * Devuelve una lista de Categorías de Documentos filtrada por un Grupo.
+     */
     public function listarGruposDoc()
     {
         $grupos = DB::table('gd_grupos_doc')
@@ -35,7 +41,6 @@ class ReporteDocumentosController extends Controller
      */
     public function listarCategoriasDoc(Request $request)
     {
-        // Ahora valida un arreglo de IDs de grupo
         $request->validate(['grupo_ids' => 'required|array']);
         $grupoIds = $request->input('grupo_ids');
 
@@ -52,6 +57,9 @@ class ReporteDocumentosController extends Controller
         return response()->json($categorias);
     }
 
+    /**
+     * Devuelve una lista de Tipos de documentos.
+     */
     public function listarTiposDocumento()
     {
         $items = DB::table('gd_tipos_documento')
@@ -62,6 +70,9 @@ class ReporteDocumentosController extends Controller
         return response()->json($items);
     }
 
+    /**
+     * Devuelve una lista de Tipos de imbuebles.
+     */
     public function listarTiposInmueble()
     {
         // Nota: Basado en tus queries, la tabla correcta es conf_tipos_predio
@@ -73,6 +84,9 @@ class ReporteDocumentosController extends Controller
         return response()->json($items);
     }
 
+    /**
+     * Esta funcion se llama normalmente cuando se hacen filtros en Dashnboar Reportes.
+     */
     private function aplicarFiltrosComunes($query, Request $request)
     {
         $predioIds = $request->input('predio_ids', []);
@@ -90,19 +104,17 @@ class ReporteDocumentosController extends Controller
         if (!empty($categoriaIds)) {
             $query->whereIn('cat.IDCategoriaDoc', $categoriaIds);
         }
-        // --- INICIO: Lógica de filtros añadida ---
         if (!empty($tipoDocIds)) {
             $query->whereIn('td.IDTipoDocumento', $tipoDocIds);
         }
         if (!empty($tipoInmuebleIds)) {
-            // Se filtra por la columna IDTipoPredio de la tabla de predios (p)
             $query->whereIn('p.IDTipoPredio', $tipoInmuebleIds);
         }
-        // --- FIN: Lógica de filtros añadida ---
 
         return $query;
     }
 
+    //INICIO ENPOINTS
     public function estadoPorPredio(ReportePorPrediosRequest $request)
     {
         $predioIds = $request->validated()['predio_ids'];
@@ -239,7 +251,7 @@ class ReporteDocumentosController extends Controller
     {
         $predioIds = $request->validated()['predio_ids'];
         $resumen = DB::table('conf_predios as p')
-            // Mismos joins que el query anterior para llegar hasta la jerarquía
+
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
             ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
@@ -276,7 +288,7 @@ class ReporteDocumentosController extends Controller
     public function cumplimientoPonderadoTotal(ReportePorPrediosRequest $request)
     {
         $predioIds = $request->validated()['predio_ids'];
-        // La consulta une todas las tablas necesarias para obtener una visión completa.
+
         $ponderado  = DB::table('conf_predios as p')
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->leftJoin('gd_documentos as d', function ($join) {
@@ -302,11 +314,12 @@ class ReporteDocumentosController extends Controller
 
         return response()->json($ponderado);
     }
+    //FIN ENPOINTS
 
+    //INICIO DE ENPOINTS PARA DASHBOARD REPORTES (TAB CUMPLIMIENTO GRAFICAS)
     public function matrizPorSubcategoria(Request $request)
     {
         $query = DB::table('conf_predios as p')
-            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
             ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
@@ -336,7 +349,6 @@ class ReporteDocumentosController extends Controller
     public function matrizArchivosPorSubcategoria(Request $request)
     {
         $query = DB::table('conf_predios as p')
-            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
             ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
@@ -367,7 +379,6 @@ class ReporteDocumentosController extends Controller
     public function matrizPorGrupo(Request $request)
     {
         $query = DB::table('conf_predios as p')
-            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
             ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
@@ -397,7 +408,6 @@ class ReporteDocumentosController extends Controller
     public function matrizArchivosPorGrupo(Request $request)
     {
         $query = DB::table('conf_predios as p')
-            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
             ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
@@ -428,7 +438,6 @@ class ReporteDocumentosController extends Controller
     public function calificacionesPonderadasPorPredio(Request $request)
     {
         $query = DB::table('conf_predios as p')
-            // --- CORRECCIÓN EN EL NOMBRE DE LA TABLA ---
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
             ->join('gd_categorias_doc as cat', 'cat.IDCategoriaDoc', '=', 'td.IDCategoriaDocumento')
@@ -464,8 +473,10 @@ class ReporteDocumentosController extends Controller
             ]
         ]);
     }
+    //FIN DE ENPOINTS PARA DASHBOARD REPORTES (TAB CUMPLIMIENTO GRAFICAS)
 
 
+    //INICIO DE ENPOINTS PARA DASHBOARD RENOVACION (3 GRAFICAS)
     public function estadoAccionesPorRenovacion(Request $request)
     {
         $request->validate([
@@ -548,11 +559,12 @@ class ReporteDocumentosController extends Controller
 
         return response()->json($data);
     }
+    //FIN DE ENPOINTS PARA DASHBOARD RENOVACION  (3 GRAFICAS)
 
 
+    //INCIO DE ENPOINTS PARA DASHBOARD REPORTES (TAB VIGENCIA GRAFICAS)
     public function documentosConEstadoPorCategoria(Request $request)
     {
-        // La base de la consulta para obtener los documentos obligatorios
         $query = DB::table('conf_predios as p')
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
@@ -581,7 +593,6 @@ class ReporteDocumentosController extends Controller
             ->orderBy('td.NombreTipoDocumento')
             ->get();
 
-        // --- INICIO: TRANSFORMACIÓN DE DATOS (LA SOLUCIÓN) ---
         // Mapeamos los resultados al formato {x, y, v} que la gráfica de matriz espera.
         $data = $resultados->map(function ($item) {
 
@@ -599,15 +610,12 @@ class ReporteDocumentosController extends Controller
                 'estado' => $estado      // Texto para el tooltip
             ];
         });
-        // --- FIN: TRANSFORMACIÓN DE DATOS ---
 
         return response()->json($data);
     }
 
-
     public function documentosPorSubcategoria(Request $request)
     {
-        // La base de la consulta es la misma que la anterior
         $query = DB::table('conf_predios as p')
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
@@ -658,7 +666,6 @@ class ReporteDocumentosController extends Controller
 
     public function tablaDetalladaVigencia(Request $request)
     {
-        // La base de la consulta es la misma que las anteriores de Vigencia
         $query = DB::table('conf_predios as p')
             ->join('gd_obligatorios_tipo_inmueble as do', 'do.IDTipoInmueble', '=', 'p.IDTipoPredio')
             ->join('gd_tipos_documento as td', 'td.IDTipoDocumento', '=', 'do.IDTipoDocumento')
@@ -694,7 +701,6 @@ class ReporteDocumentosController extends Controller
 
     public function porcentajeVigenciaPorPredio(Request $request)
     {
-        // 1. Iniciar la construcción de la consulta (Query Builder)
         $query = DB::table('conf_predios as p')
             ->join('gd_obligatorios_tipo_inmueble as oti', 'p.IDTipoPredio', '=', 'oti.IDTipoInmueble')
             ->join('gd_tipos_documento as td', 'oti.IDTipoDocumento', '=', 'td.IDTipoDocumento') // Necesario para filtrar por grupo/categoría
@@ -706,7 +712,7 @@ class ReporteDocumentosController extends Controller
             ->leftJoin('track_instancias as ti', 'd.IDDocumento', '=', 'ti.IDInstancia')
             ->leftJoin('track_estados as te', 'ti.IDEstadoActualInstancia', '=', 'te.IDEstado');
 
-        // 2. Aplicar filtros dinámicamente ANTES de ejecutar la consulta
+        // Aplicar filtros dinámicamente ANTES de ejecutar la consulta
         $query->when($request->filled('id_predios'), function ($q) use ($request) {
             return $q->whereIn('p.IDPredio', $request->id_predios);
         });
@@ -727,7 +733,7 @@ class ReporteDocumentosController extends Controller
             return $q->whereIn('p.IDTipoPredio', $request->id_tipos_inmueble);
         });
 
-        // 3. Seleccionar, agrupar y obtener los resultados
+        // Seleccionar, agrupar y obtener los resultados
         $data = $query->select(
             'p.NombrePredio',
             DB::raw('COUNT(DISTINCT oti.IDTipoDocumento) AS TotalObligatorios'), // Usamos DISTINCT para evitar duplicados por joins
@@ -740,7 +746,7 @@ class ReporteDocumentosController extends Controller
             ->orderBy('p.NombrePredio')
             ->get();
 
-        // 4. Formatear la respuesta
+        // Formatear la respuesta
         $labels = $data->pluck('NombrePredio');
 
         $datasets = [
@@ -767,4 +773,5 @@ class ReporteDocumentosController extends Controller
             'datasets' => $datasets
         ]);
     }
+    //FIN DE ENPOINTS PARA DASHBOARD REPORTES (TAB VIGENCIA GRAFICAS)
 }

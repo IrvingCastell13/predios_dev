@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 
 class ReporteEquiposController extends Controller
 {
+    /**
+     * Devuelve una lista de Sistemas.
+     */
     public function listarSistemas()
     {
         $sistemas = DB::table('in_sistemas')
@@ -17,6 +20,10 @@ class ReporteEquiposController extends Controller
             ->get();
         return response()->json($sistemas);
     }
+
+    /**
+     * Devuelve una lista de Subsistemas.
+     */
 
     public function listarSubsistemas(Request $request)
     {
@@ -36,9 +43,10 @@ class ReporteEquiposController extends Controller
         return response()->json($subsistemas);
     }
 
+    //INICIO DE ENPOINTS PARA DASHBOARD MANTENIMIENTO (3 GRAFICAS)
     public function estadoAccionesPorMantenimiento(Request $request)
     {
-        // --- INICIA CORRECCIÓN: Validar arreglos ---
+
         $request->validate([
             'predio_ids' => 'sometimes|array',
             'sistema_ids' => 'sometimes|array',
@@ -52,7 +60,6 @@ class ReporteEquiposController extends Controller
         $subsistemaIds = $request->input('subsistema_ids', []); // Acepta arreglo
         $fechaInicio = $request->input('fecha_inicio');
         $fechaFin = $request->input('fecha_fin');
-        // --- FIN CORRECCIÓN ---
 
         $query = DB::table('conf_predios as p')
             ->join('conf_edificios as ed', 'ed.IDPredio', '=', 'p.IDPredio')
@@ -65,7 +72,7 @@ class ReporteEquiposController extends Controller
             ->leftJoin('track_instancias as ti', 'ti.IDInstancia', '=', 'e.IDEquipo')
             ->leftJoin('track_estados as s', 's.IDEstado', '=', 'ti.IDEstadoActualInstancia');
 
-        // --- INICIA CORRECCIÓN: Lógica de filtrado con whereIn ---
+
         if (!empty($predioIds)) {
             $query->whereIn('p.IDPredio', $predioIds);
         }
@@ -112,4 +119,6 @@ class ReporteEquiposController extends Controller
 
         return response()->json($data);
     }
+    //FIN DE ENPOINTS PARA DASHBOARD MANTENIMIENTO (3 GRAFICAS)
+
 }

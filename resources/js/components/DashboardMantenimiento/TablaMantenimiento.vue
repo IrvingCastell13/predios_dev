@@ -47,8 +47,8 @@ export default {
      props: {
         apiUrl: { type: String, required: true },
         idPredios: { type: Array, required: true },
-        idSistemas: { type: Array, required: true },    // <-- Cambiado a Array
-        idSubsistemas: { type: Array, required: true }, // <-- Cambiado a Array
+        idSistemas: { type: Array, required: true },    
+        idSubsistemas: { type: Array, required: true }, 
         fechaInicio: { type: String, default: null },
         fechaFin: { type: String, default: null }
     },
@@ -62,8 +62,8 @@ export default {
          filtros() {
             return {
                 predios: this.idPredios,
-                sistemas: this.idSistemas,         // <-- Nombre de prop cambiado
-                subsistemas: this.idSubsistemas,   // <-- Nombre de prop cambiado
+                sistemas: this.idSistemas,         
+                subsistemas: this.idSubsistemas,   
                 inicio: this.fechaInicio,
                 fin: this.fechaFin
             };
@@ -92,8 +92,8 @@ export default {
                 const response = await axios.get(this.apiUrl, {
                     params: {
                         predio_ids: this.idPredios,
-                        sistema_ids: this.idSistemas,       // <-- Nombre de param cambiado
-                        subsistema_ids: this.idSubsistemas, // <-- Nombre de param cambiado
+                        sistema_ids: this.idSistemas,      
+                        subsistema_ids: this.idSubsistemas, 
                         fecha_inicio: this.fechaInicio,
                         fecha_fin: this.fechaFin
                     }

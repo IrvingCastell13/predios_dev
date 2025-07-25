@@ -7,7 +7,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard-reportes', function () {
-    return view('reportes');
+    return view('dashboard-reportes');
 });
 
 Route::get('/dashboard-renovacion', function () { // <-- URL cambiada
@@ -18,6 +18,7 @@ Route::get('/dashboard-mantenimiento', function () {
     return view('dashboard-mantenimiento');
 });
 
-Route::get('/equipos', function () {
-    return view('equipos');
+
+Route::get('/dashboard-orden-trabajo', function () {
+    return view('dashboard-orden-trabajo');
 });

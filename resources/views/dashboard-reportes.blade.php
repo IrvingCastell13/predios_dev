@@ -4,23 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Renovación</title>
+    <title>Dashboard de Reportes</title>
+
     @vite('resources/css/app.scss')
+
+
 </head>
 
 <body class="d-flex flex-column h-100">
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Dashboard de Renovación</a>
+            <a class="navbar-brand" href="#">Dashboard de Reportes</a>
         </div>
     </nav>
 
     <main class="flex-shrink-0">
         <div class="container py-4">
-            <div id="app-renovacion"></div>
-
-        </div>
+            <div id="app-reportes">
+                <graficas-reportes></graficas-reportes>
+            </div>
         </div>
     </main>
 
@@ -30,8 +33,8 @@
         </div>
     </footer>
 
-    @vite('resources/js/app.js')
 
+    @vite('resources/js/app.js')
 
 </body>
 

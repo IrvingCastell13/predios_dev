@@ -108,8 +108,8 @@ export default {
                 const response = await axios.get(this.apiUrl, {
                     params: {
                         predio_ids: this.idPredios,
-                        grupo_ids: this.idGrupos,         // <-- Nombre de param cambiado
-                        categoria_ids: this.idCategorias, // <-- Nombre de param cambiado
+                        grupo_ids: this.idGrupos,         
+                        categoria_ids: this.idCategorias, 
                         fecha_inicio: this.fechaInicio,
                         fecha_fin: this.fechaFin
                     }
