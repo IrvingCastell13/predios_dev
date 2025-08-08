@@ -1,0 +1,106 @@
+:root {
+  --primary: #1F7CC0;
+  --primary-btn: #1F7CC0;
+  --primary-hover: #72E2F1;
+  --primary-focus: #1F7CC0;
+  --primary-shadow: rgba(15, 100, 145, 0.25);
+
+  --rechazo: #F8A212;
+  --rechazo-btn: #F8A212;
+  --rechazo-hover: #F8A212;
+  --rechazo-focus: #F8A212;
+  --rechazo-shadow: rgba(248, 162, 18, 0.25);
+
+--orange: #F8A212;
+--orange-hover: #F8A212;
+--orange-focus: #F8A212;
+--orange-shadow: rgba(248, 162, 18, 0.25);
+
+  --sky-blue: #1F7CC0;
+  --sky-blue-light: #e1f4fd;
+
+  --light-grey-1: #ebedf6;
+  --light-grey-2: #f5f9fc;
+  --light-grey-3: #f3f3f4;
+  --light-grey-4: #f9f9f9;
+
+  --grey-1: #c0c0c0;
+  --grey-2: #f7f7f7;
+  --grey-3: #f8f8f9;
+
+  --disable: #c0c0c0;
+
+  --text-color: #212b32;
+  --text-color-2: #4b465c;
+  --text-color-3: #111827;
+  --text-color-4: #4c6272;
+  --text-color-6: #666666;
+
+  --danger: red;
+  --danger-light: #fff3f2;
+
+  --success: #00a488;
+  --success-light: #e0f8f1;
+
+  --info: #b28f00;
+  --info-light: #fffcee;
+
+  --purple:#964ABA;
+  --purple-extra-light:#F2E3F2;
+}
+
+/* Colors */
+.white {
+  color: white;
+}
+.primary {
+  color: var(--primary) !important;
+}
+.sky-blue {
+  color: var(--sky-blue);
+}
+.sky-blue-light {
+  color: var(--sky-blue-light);
+}
+.text-color {
+  color: var(--text-color);
+}
+.text-color-2 {
+  color: var(--text-color-2);
+}
+.text-color-3 {
+  color: var(--text-color-3);
+}
+.text-color-4 {
+  color: var(--text-color-4);
+}
+.danger {
+  color: var(--danger);
+}
+.disable {
+  color: var(--disable);
+}
+.success {
+  color: var(--success) !important;
+}
+
+
+/* Background Colors */
+.bg-light-grey-3 {
+  background-color: var(--light-grey-3);
+}
+.bg-grey-2 {
+  background-color: var(--grey-2);
+}
+.bg-grey-3{
+  background-color: var(--grey-3);
+}
+.bg.orange {
+  background-color: var(--orange);
+}
+.bg-purple-extra-light{background-color: var(--purple-extra-light);}
+.bg-danger-light{background-color: var(--danger-light);}
+.bg-sky-blue-light{background-color: var(--sky-blue-light);}
+.bg-light-grey-2{background-color: var(--light-grey-2);}
+.bg-light-grey-4{background-color: var(--light-grey-4);}
+.bg-success-light{background-color: var(--success-light);}

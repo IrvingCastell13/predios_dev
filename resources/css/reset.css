@@ -1,0 +1,66 @@
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+  padding: 0;
+}
+ul[role="list"],
+ol[role="list"] {
+  list-style: none;
+}
+li {
+  list-style: none;
+}
+a {
+  text-decoration: none;
+}
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+}
+img,
+picture,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+  font-style: italic;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+body,
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: normal;
+  margin: 0;
+  padding: 0;
+}
+ul{margin: 0; padding: 0;}
+p{margin: 0; padding: 0;}
+img {
+  display: inline-block;
+}
+button{border: 0;}
+figure{margin: 0;}
+input:focus, textarea:focus{outline: none; box-shadow: none;}
+table{border: 0; padding: 0; margin: 0;}
+button{background: none;}
